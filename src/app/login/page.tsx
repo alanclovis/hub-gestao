@@ -38,13 +38,14 @@ export default function LoginPage() {
           className="hub-brand"
           style={{ justifyContent: "center", marginBottom: "1rem" }}
         >
-          <span className="hub-brand-mark">HG</span>
+          <span className="hub-brand-mark">BF</span>
         </div>
-        <h1>Hub Gestão</h1>
+        <h1>BF</h1>
         <p>
-          Sem Vercel: use um <strong>Personal Access Token</strong> do GitHub
-          com permissão <code>gist</code>. Os dados ficam no seu Gist privado —
-          acessível de qualquer PC pelo GitHub Pages.
+          Seu best friend de gestão. Sem Vercel: use um{" "}
+          <strong>Personal Access Token</strong> do GitHub com permissão{" "}
+          <code>gist</code>. Os dados ficam no seu Gist privado — acessível de
+          qualquer PC pelo GitHub Pages.
         </p>
         <ol
           style={{

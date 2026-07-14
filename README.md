@@ -1,6 +1,6 @@
-# Hub Gestão
+# BF
 
-Hub pessoal de gestão: **Projetos** (Kanban), **1:1s**, **Feedbacks** e **Pendências**.
+**BF** (*best friend*) — hub pessoal de gestão: **Projetos** (Kanban), **1:1s**, **Feedbacks** e **Pendências**.
 
 Dados no seu **Gist privado**. App hospedado no **GitHub Pages** (sem Vercel) — acessível de qualquer PC.
 
@@ -13,11 +13,11 @@ Depois do deploy:
 ## Como entrar (qualquer máquina)
 
 1. Abra a URL do Pages.
-2. Crie um [Personal Access Token](https://github.com/settings/tokens/new?scopes=gist&description=Hub%20Gestao) com scope **`gist`**.
+2. Crie um [Personal Access Token](https://github.com/settings/tokens/new?scopes=gist&description=BF) com scope **`gist`**.
 3. Cole o token na tela de login.
 4. O token fica só naquele navegador (`localStorage`). Em outro PC, cole de novo o mesmo (ou outro) token da sua conta.
 
-Na primeira gravação, o app cria o Gist privado `Hub Gestão — dados`.
+Na primeira gravação, o app cria o Gist privado `Hub Gestão — dados` (nome interno estável para não quebrar dados existentes).
 
 ## Ativar GitHub Pages
 

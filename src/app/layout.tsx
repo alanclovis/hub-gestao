@@ -16,8 +16,8 @@ const body = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  title: "Hub Gestão",
-  description: "Hub pessoal de projetos, 1:1s, feedbacks e pendências",
+  title: "BF",
+  description: "Seu best friend de gestão — projetos, 1:1s, feedbacks e pendências",
 };
 
 export default function RootLayout({

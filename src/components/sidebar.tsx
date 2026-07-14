@@ -32,10 +32,10 @@ export function Sidebar() {
       <aside className={`hub-sidebar${navOpen ? " is-nav-open" : ""}`}>
         <div className="hub-sidebar-top">
           <div className="hub-brand">
-            <span className="hub-brand-mark">HG</span>
+            <span className="hub-brand-mark">BF</span>
             <div>
-              <p className="hub-brand-title">Hub Gestão</p>
-              <p className="hub-brand-sub">pessoal</p>
+              <p className="hub-brand-title">BF</p>
+              <p className="hub-brand-sub">best friend</p>
             </div>
           </div>
           <div className="hub-sidebar-top-actions">
