@@ -1,11 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
+import {
+  getAllCollections,
+  getCollection,
+  putCollection,
+} from "@/lib/gist";
 import type { CollectionMap, CollectionName } from "@/lib/types";
 
 type Status = "idle" | "loading" | "saving" | "saved" | "error";
 
 export function useCollection<K extends CollectionName>(name: K) {
+  const { token } = useAuth();
   const [data, setData] = useState<CollectionMap[K] | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [error, setError] = useState<string | null>(null);
@@ -13,16 +20,16 @@ export function useCollection<K extends CollectionName>(name: K) {
   const latest = useRef<CollectionMap[K] | null>(null);
 
   useEffect(() => {
+    if (!token) {
+      setStatus("error");
+      setError("Não autenticado");
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
         setStatus("loading");
-        const res = await fetch(`/api/data/${name}`);
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error ?? `HTTP ${res.status}`);
-        }
-        const json = (await res.json()) as CollectionMap[K];
+        const json = await getCollection(token, name);
         if (!cancelled) {
           setData(json);
           latest.current = json;
@@ -38,22 +45,15 @@ export function useCollection<K extends CollectionName>(name: K) {
     return () => {
       cancelled = true;
     };
-  }, [name]);
+  }, [name, token]);
 
   const persist = useCallback(
     async (next: CollectionMap[K]) => {
+      if (!token) return;
       setStatus("saving");
       setError(null);
       try {
-        const res = await fetch(`/api/data/${name}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(next),
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error ?? `HTTP ${res.status}`);
-        }
+        await putCollection(token, name, next);
         setStatus("saved");
         setTimeout(() => setStatus("idle"), 1200);
       } catch (err) {
@@ -61,7 +61,7 @@ export function useCollection<K extends CollectionName>(name: K) {
         setStatus("error");
       }
     },
-    [name],
+    [name, token],
   );
 
   const update = useCallback(
@@ -82,31 +82,25 @@ export function useCollection<K extends CollectionName>(name: K) {
     [persist],
   );
 
-  const saveNow = useCallback(async () => {
-    if (latest.current !== null) {
-      if (timer.current) clearTimeout(timer.current);
-      await persist(latest.current);
-    }
-  }, [persist]);
-
-  return { data, setData: update, status, error, saveNow };
+  return { data, setData: update, status, error };
 }
 
 export function useAllData() {
+  const { token } = useAuth();
   const [data, setData] = useState<CollectionMap | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!token) {
+      setStatus("error");
+      setError("Não autenticado");
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/data/all");
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error ?? `HTTP ${res.status}`);
-        }
-        const json = (await res.json()) as CollectionMap;
+        const json = await getAllCollections(token);
         if (!cancelled) {
           setData(json);
           setStatus("idle");
@@ -121,7 +115,7 @@ export function useAllData() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [token]);
 
   return { data, status, error };
 }

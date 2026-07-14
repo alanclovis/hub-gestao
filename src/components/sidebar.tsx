@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth-provider";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -12,12 +12,10 @@ const NAV = [
   { href: "/pendencias", label: "Pendências" },
 ];
 
-export function Sidebar({
-  userName,
-}: {
-  userName?: string | null;
-}) {
+export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
 
   return (
     <aside className="hub-sidebar">
@@ -33,7 +31,7 @@ export function Sidebar({
         {NAV.map((item) => {
           const active =
             item.href === "/"
-              ? pathname === "/"
+              ? pathname === "/" || pathname === ""
               : pathname.startsWith(item.href);
           return (
             <Link
@@ -48,11 +46,14 @@ export function Sidebar({
       </nav>
 
       <div className="hub-sidebar-foot">
-        <p className="hub-user">{userName ?? "Você"}</p>
+        <p className="hub-user">{user?.name || user?.login || "Você"}</p>
         <button
           type="button"
           className="hub-ghost-btn"
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => {
+            logout();
+            router.replace("/login");
+          }}
         >
           Sair
         </button>

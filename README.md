@@ -1,84 +1,53 @@
 # Hub Gestão
 
-Hub pessoal de gestão: **Projetos** (Kanban), **1:1s**, **Feedbacks** e **Pendências**.  
-Os dados ficam num **Gist privado** na sua conta GitHub — acessível de qualquer lugar após o deploy.
+Hub pessoal de gestão: **Projetos** (Kanban), **1:1s**, **Feedbacks** e **Pendências**.
 
-## Stack
+Dados no seu **Gist privado**. App hospedado no **GitHub Pages** (sem Vercel) — acessível de qualquer PC.
 
-- Next.js 15 (App Router) + TypeScript
-- Auth.js (NextAuth v5) com GitHub OAuth (`gist` scope)
-- Persistência via GitHub Gist API
-- Drag-and-drop com `@dnd-kit`
+## URL
 
-## Setup local
+Depois do deploy:
 
-### 1. Variáveis de ambiente
+**https://alanclovis.github.io/hub-gestao/**
 
-```bash
-cp .env.example .env.local
-```
+## Como entrar (qualquer máquina)
 
-Preencha:
+1. Abra a URL do Pages.
+2. Crie um [Personal Access Token](https://github.com/settings/tokens/new?scopes=gist&description=Hub%20Gestao) com scope **`gist`**.
+3. Cole o token na tela de login.
+4. O token fica só naquele navegador (`localStorage`). Em outro PC, cole de novo o mesmo (ou outro) token da sua conta.
 
-| Variável | Onde pegar |
-|----------|------------|
-| `GITHUB_ID` / `GITHUB_SECRET` | [GitHub OAuth Apps](https://github.com/settings/developers) → New OAuth App |
-| `NEXTAUTH_SECRET` | `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | `http://localhost:3000` no local |
+Na primeira gravação, o app cria o Gist privado `Hub Gestão — dados`.
 
-**OAuth App:**
-- Homepage URL: `http://localhost:3000`
-- Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
+## Ativar GitHub Pages
 
-### 2. Instalar e rodar
+1. Repo → **Settings** → **Pages**
+2. **Source:** GitHub Actions
+3. Faça push na `master` (o workflow `Deploy GitHub Pages` publica automaticamente)
+
+## Desenvolvimento local
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abra http://localhost:3000 → **Entrar com GitHub**.
+Abra http://localhost:3000 — mesmo login por token (não precisa de OAuth App nem `.env`).
 
-Na primeira leitura/gravação, o app cria automaticamente um Gist privado com description:
-
-`Hub Gestão — dados`
-
-Arquivos no Gist: `projetos.json`, `oneones.json`, `feedbacks.json`, `pendencias.json`, `meta.json`.
-
-## Uso
-
-| Área | Como usar |
-|------|-----------|
-| Projetos | `+ Novo projeto`, arraste entre colunas, clique no card para editar e adicionar updates diários |
-| 1:1s | Registre pessoa, data, pauta, combinados, follow-ups |
-| Feedbacks | De quem, tema, contexto |
-| Pendências | Título, prazo, status aberta/feita |
-| Home | Overview de pendências abertas, projetos em andamento e 1:1s recentes |
-
-Cada alteração é salva no Gist com debounce (~500ms). O badge no topo mostra o status.
-
-## Deploy (Vercel)
-
-1. Crie o repositório no GitHub e faça push.
-2. Importe no Vercel.
-3. Configure as mesmas env vars; `NEXTAUTH_URL` = URL do deploy (ex.: `https://hub-gestao.vercel.app`).
-4. Atualize o OAuth App:
-   - Homepage = URL de produção
-   - Callback = `https://SEU_DOMINIO/api/auth/callback/github`  
-   (pode manter também o callback de localhost se o OAuth App aceitar um; em produção use um OAuth App separado ou URLs múltiplas se disponível.)
-
-## Revisar o ano com IA
-
-Com o Gist sincronizado, peça no Cursor:
-
-> Leia os JSON do Gist “Hub Gestão — dados” (ou exporte `projetos.json` etc.) e classifique por KR, top 10 entregas e resumo executivo.
-
-Ou use a API do GitHub Gist para baixar os arquivos.
-
-## Scripts
+Build estático local:
 
 ```bash
-npm run dev      # desenvolvimento
-npm run build    # build produção
-npm run start    # servidor produção
+GITHUB_PAGES=true npm run build
+npx serve out
 ```
+
+## Segurança
+
+- Use token **só com scope `gist`** (não precisa de `repo`).
+- Não compartilhe o token.
+- Em PC compartilhado, clique em **Sair** ao terminar.
+
+## OAuth App antigo
+
+Se você criou um OAuth App para a tentativa com Vercel, pode apagar em  
+[GitHub Developer settings](https://github.com/settings/developers) — não é mais usado.
