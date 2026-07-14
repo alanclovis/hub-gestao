@@ -38,7 +38,9 @@ export default function HubLayout({
   return (
     <div className="hub-shell">
       <Sidebar />
-      <main className="hub-main">{children}</main>
+      <main className="hub-main">
+        <div className="hub-stage">{children}</div>
+      </main>
     </div>
   );
 }

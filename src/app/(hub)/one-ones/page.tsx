@@ -94,6 +94,7 @@ export default function OneOnesPage() {
     <>
       <header className="hub-page-head">
         <div>
+          <p className="hub-kicker">Conversas</p>
           <h1>1:1s</h1>
           <p>Pautas, combinados e follow-ups.</p>
         </div>

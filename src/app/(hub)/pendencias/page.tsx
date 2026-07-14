@@ -93,6 +93,7 @@ export default function PendenciasPage() {
     <>
       <header className="hub-page-head">
         <div>
+          <p className="hub-kicker">Agenda</p>
           <h1>Pendências</h1>
           <p>O que ainda precisa fechar.</p>
         </div>

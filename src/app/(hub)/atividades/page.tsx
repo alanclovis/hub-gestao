@@ -165,6 +165,7 @@ export default function AtividadesPage() {
     <>
       <header className="hub-page-head">
         <div>
+          <p className="hub-kicker">Dia a dia</p>
           <h1>Atividades</h1>
           <p>Registre o que fez e vincule a um projeto se quiser espelhar como update.</p>
         </div>

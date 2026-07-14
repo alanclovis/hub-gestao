@@ -147,6 +147,7 @@ export default function FeedbacksPage() {
     <>
       <header className="hub-page-head">
         <div>
+          <p className="hub-kicker">Histórico</p>
           <h1>Feedbacks</h1>
           <p>Filtre por pessoa ou tema para achar o histórico.</p>
         </div>

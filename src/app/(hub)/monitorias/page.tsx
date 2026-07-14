@@ -38,6 +38,7 @@ export default function MonitoriasPage() {
     <>
       <header className="hub-page-head">
         <div>
+          <p className="hub-kicker">Qualidade</p>
           <h1>Quality Insights</h1>
           <p>Monitorias de qualidade — KPIs operacionais da planilha.</p>
         </div>

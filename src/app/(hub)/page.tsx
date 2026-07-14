@@ -23,6 +23,7 @@ export default function HomePage() {
     <>
       <header className="hub-page-head">
         <div>
+          <p className="hub-kicker">Visão geral</p>
           <h1>Hoje</h1>
           <p>O que avançou na semana ou no mês.</p>
         </div>
