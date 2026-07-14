@@ -1,5 +1,6 @@
 import {
   SCHEMA_VERSION,
+  type Atividade,
   type CollectionMap,
   type Feedback,
   type Meta,
@@ -18,6 +19,7 @@ export function emptyMeta(): Meta {
 export function defaultCollections(): CollectionMap {
   return {
     projetos: [],
+    atividades: [],
     oneones: [],
     feedbacks: [],
     pendencias: [],
@@ -45,6 +47,10 @@ export function fileNameFor(collection: keyof CollectionMap): string {
 
 export function ensureProjetos(data: unknown): Projeto[] {
   return Array.isArray(data) ? (data as Projeto[]) : [];
+}
+
+export function ensureAtividades(data: unknown): Atividade[] {
+  return Array.isArray(data) ? (data as Atividade[]) : [];
 }
 
 export function ensureOneOnes(data: unknown): OneOnOne[] {

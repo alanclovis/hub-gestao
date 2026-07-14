@@ -1,6 +1,7 @@
 import { defaultCollections, fileNameFor, parseCollection } from "./schema";
 import {
   GIST_DESCRIPTION,
+  SCHEMA_VERSION,
   type CollectionMap,
   type CollectionName,
 } from "./types";
@@ -121,6 +122,7 @@ export async function getAllCollections(
   const gist = await ensureHubGist(token);
   return {
     projetos: readCollectionFromGist(gist, "projetos"),
+    atividades: readCollectionFromGist(gist, "atividades"),
     oneones: readCollectionFromGist(gist, "oneones"),
     feedbacks: readCollectionFromGist(gist, "feedbacks"),
     pendencias: readCollectionFromGist(gist, "pendencias"),
@@ -165,11 +167,12 @@ export async function putAllCollections(
   const gist = await ensureHubGist(token);
   const full: CollectionMap = {
     projetos: data.projetos,
+    atividades: data.atividades ?? [],
     oneones: data.oneones,
     feedbacks: data.feedbacks,
     pendencias: data.pendencias,
     meta: {
-      schemaVersion: data.meta?.schemaVersion ?? 1,
+      schemaVersion: data.meta?.schemaVersion ?? SCHEMA_VERSION,
       gistId: gist.id,
       lastSync: new Date().toISOString(),
     },

@@ -36,6 +36,20 @@ export interface Projeto {
   updatedAt: string;
 }
 
+export interface Atividade {
+  id: string;
+  date: string;
+  titulo: string;
+  decisao?: string;
+  evidencia?: string;
+  resultado?: string;
+  notas?: string;
+  projetoId?: string;
+  linkedUpdateId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface OneOnOne {
   id: string;
   pessoa: string;
@@ -79,6 +93,7 @@ export interface Meta {
 
 export type CollectionName =
   | "projetos"
+  | "atividades"
   | "oneones"
   | "feedbacks"
   | "pendencias"
@@ -86,6 +101,7 @@ export type CollectionName =
 
 export type CollectionMap = {
   projetos: Projeto[];
+  atividades: Atividade[];
   oneones: OneOnOne[];
   feedbacks: Feedback[];
   pendencias: Pendencia[];
@@ -111,4 +127,4 @@ export const PAPEIS: Papel[] = [
 ];
 
 export const GIST_DESCRIPTION = "Hub Gestão — dados";
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;

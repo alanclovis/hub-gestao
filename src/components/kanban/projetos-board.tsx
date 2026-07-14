@@ -107,11 +107,17 @@ function ProjectDrawer({
   onChange,
   onClose,
   onDelete,
+  onUpdateMutated,
 }: {
   projeto: Projeto;
   onChange: (next: Projeto) => void;
   onClose: () => void;
   onDelete: () => void;
+  onUpdateMutated?: (payload: {
+    action: "upsert" | "delete";
+    update?: ProjetoUpdate;
+    updateId?: string;
+  }) => void;
 }) {
   const [draft, setDraft] = useState<ProjetoUpdate>({
     id: "",
@@ -121,9 +127,19 @@ function ProjectDrawer({
     evidencia: "",
     resultado: "",
   });
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState("");
   const [copied, setCopied] = useState(false);
+
+  const emptyDraft = (): ProjetoUpdate => ({
+    id: "",
+    date: new Date().toISOString().slice(0, 10),
+    oQueFiz: "",
+    decisao: "",
+    evidencia: "",
+    resultado: "",
+  });
 
   const patch = (partial: Partial<Projeto>) => {
     onChange({
@@ -133,18 +149,38 @@ function ProjectDrawer({
     });
   };
 
-  const addUpdate = () => {
+  const clearUpdateForm = () => {
+    setEditingId(null);
+    setDraft(emptyDraft());
+  };
+
+  const saveUpdate = () => {
     if (!draft.oQueFiz.trim()) return;
-    const item: ProjetoUpdate = { ...draft, id: nanoid() };
-    patch({ updates: [item, ...projeto.updates] });
-    setDraft({
-      id: "",
-      date: new Date().toISOString().slice(0, 10),
-      oQueFiz: "",
-      decisao: "",
-      evidencia: "",
-      resultado: "",
-    });
+    if (editingId) {
+      const item: ProjetoUpdate = { ...draft, id: editingId };
+      patch({
+        updates: projeto.updates.map((u) => (u.id === editingId ? item : u)),
+      });
+      onUpdateMutated?.({ action: "upsert", update: item });
+    } else {
+      const item: ProjetoUpdate = { ...draft, id: nanoid() };
+      patch({ updates: [item, ...projeto.updates] });
+      onUpdateMutated?.({ action: "upsert", update: item });
+    }
+    clearUpdateForm();
+  };
+
+  const deleteUpdate = () => {
+    if (!editingId) return;
+    const id = editingId;
+    patch({ updates: projeto.updates.filter((u) => u.id !== id) });
+    onUpdateMutated?.({ action: "delete", updateId: id });
+    clearUpdateForm();
+  };
+
+  const startEdit = (u: ProjetoUpdate) => {
+    setEditingId(u.id);
+    setDraft({ ...u });
   };
 
   return (
@@ -260,7 +296,7 @@ function ProjectDrawer({
         </div>
 
         <div className="update-feed">
-          <h3>Updates diários</h3>
+          <h3>{editingId ? "Editando update" : "Novo update"}</h3>
           <div className="field">
             <label>Data</label>
             <input
@@ -301,13 +337,41 @@ function ProjectDrawer({
               }
             />
           </div>
-          <button type="button" className="hub-primary-btn" onClick={addUpdate}>
-            Adicionar update
-          </button>
+          <div className="drawer-actions">
+            <button type="button" className="hub-primary-btn" onClick={saveUpdate}>
+              {editingId ? "Salvar update" : "Adicionar update"}
+            </button>
+            {editingId ? (
+              <>
+                <button
+                  type="button"
+                  className="hub-secondary-btn"
+                  onClick={clearUpdateForm}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="hub-ghost-btn"
+                  onClick={deleteUpdate}
+                >
+                  Excluir update
+                </button>
+              </>
+            ) : null}
+          </div>
 
           {projeto.updates.map((u) => (
-            <div key={u.id} className="update-item">
-              <div className="date">{u.date}</div>
+            <button
+              type="button"
+              key={u.id}
+              className={`update-item update-item-btn${editingId === u.id ? " is-editing" : ""}`}
+              onClick={() => startEdit(u)}
+            >
+              <div className="date">
+                {u.date}
+                <span className="muted"> · cliques para editar</span>
+              </div>
               <div>
                 <strong>O que fiz:</strong> {u.oQueFiz}
               </div>
@@ -326,7 +390,7 @@ function ProjectDrawer({
                   <strong>Resultado:</strong> {u.resultado}
                 </div>
               ) : null}
-            </div>
+            </button>
           ))}
         </div>
 
@@ -399,9 +463,15 @@ function ProjectDrawer({
 export function ProjetosBoard({
   projetos,
   onChange,
+  onUpdateMutated,
 }: {
   projetos: Projeto[];
   onChange: (next: Projeto[]) => void;
+  onUpdateMutated?: (payload: {
+    action: "upsert" | "delete";
+    update?: ProjetoUpdate;
+    updateId?: string;
+  }) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -534,6 +604,7 @@ export function ProjetosBoard({
             onChange(projetos.filter((p) => p.id !== open.id));
             setOpenId(null);
           }}
+          onUpdateMutated={onUpdateMutated}
         />
       ) : null}
     </>

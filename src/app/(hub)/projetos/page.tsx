@@ -3,10 +3,34 @@
 import { SaveBadge } from "@/components/save-badge";
 import { ProjetosBoard } from "@/components/kanban/projetos-board";
 import { useCollection } from "@/hooks/use-collection";
-import type { Projeto } from "@/lib/types";
+import { syncUpdateIntoAtividades } from "@/lib/atividade-sync";
+import type { Projeto, ProjetoUpdate } from "@/lib/types";
 
 export default function ProjetosPage() {
-  const { data, setData, status, error } = useCollection("projetos");
+  const {
+    data: projetos,
+    setData: setProjetos,
+    status: statusP,
+    error: errorP,
+  } = useCollection("projetos");
+  const {
+    data: atividades,
+    setData: setAtividades,
+    status: statusA,
+    error: errorA,
+  } = useCollection("atividades");
+
+  const status =
+    statusA === "error" || statusP === "error"
+      ? "error"
+      : statusA === "saving" || statusP === "saving"
+        ? "saving"
+        : statusA === "loading" || statusP === "loading"
+          ? "loading"
+          : statusA === "saved" || statusP === "saved"
+            ? "saved"
+            : "idle";
+  const error = errorP || errorA;
 
   return (
     <>
@@ -18,12 +42,20 @@ export default function ProjetosPage() {
         <SaveBadge status={status} error={error} />
       </header>
 
-      {data === null ? (
+      {projetos === null ? (
         <p className="empty-hint">Carregando board…</p>
       ) : (
         <ProjetosBoard
-          projetos={data}
-          onChange={(next: Projeto[]) => setData(() => next)}
+          projetos={projetos}
+          onChange={(next: Projeto[]) => setProjetos(() => next)}
+          onUpdateMutated={(payload: {
+            action: "upsert" | "delete";
+            update?: ProjetoUpdate;
+            updateId?: string;
+          }) => {
+            if (!atividades) return;
+            setAtividades(() => syncUpdateIntoAtividades(atividades, payload));
+          }}
         />
       )}
     </>

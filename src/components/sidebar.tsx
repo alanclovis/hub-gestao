@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth-provider";
 const NAV = [
   { href: "/", label: "Home" },
   { href: "/projetos", label: "Projetos" },
+  { href: "/atividades", label: "Atividades" },
   { href: "/one-ones", label: "1:1s" },
   { href: "/feedbacks", label: "Feedbacks" },
   { href: "/pendencias", label: "Pendências" },

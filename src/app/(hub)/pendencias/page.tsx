@@ -21,6 +21,7 @@ function emptyPendencia(): Pendencia {
 
 export default function PendenciasPage() {
   const { data, setData, status, error } = useCollection("pendencias");
+  const { data: projetos } = useCollection("projetos");
   const [openId, setOpenId] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<"todas" | PendenciaStatus>(
     "aberta",
@@ -102,6 +103,9 @@ export default function PendenciasPage() {
               <p className="meta">
                 {p.status === "aberta" ? "Aberta" : "Feita"}
                 {p.prazo ? ` · prazo ${p.prazo}` : ""}
+                {p.projetoId
+                  ? ` · ${projetos?.find((x) => x.id === p.projetoId)?.titulo ?? "projeto"}`
+                  : ""}
               </p>
             </button>
           ))}
@@ -161,28 +165,24 @@ export default function PendenciasPage() {
                 onChange={(e) => patch({ ...open, notas: e.target.value })}
               />
             </div>
-            <div className="field-row">
-              <div className="field">
-                <label>Projeto ID (opcional)</label>
-                <input
-                  value={open.projetoId ?? ""}
-                  onChange={(e) =>
-                    patch({ ...open, projetoId: e.target.value || undefined })
-                  }
-                />
-              </div>
-              <div className="field">
-                <label>1:1 ID (opcional)</label>
-                <input
-                  value={open.oneOnOneId ?? ""}
-                  onChange={(e) =>
-                    patch({
-                      ...open,
-                      oneOnOneId: e.target.value || undefined,
-                    })
-                  }
-                />
-              </div>
+            <div className="field">
+              <label>Projeto (opcional)</label>
+              <select
+                value={open.projetoId ?? ""}
+                onChange={(e) =>
+                  patch({
+                    ...open,
+                    projetoId: e.target.value || undefined,
+                  })
+                }
+              >
+                <option value="">Sem projeto</option>
+                {(projetos ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.titulo || "Sem título"}
+                  </option>
+                ))}
+              </select>
             </div>
             <button
               type="button"
