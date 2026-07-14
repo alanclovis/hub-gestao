@@ -254,27 +254,6 @@ export default function AtividadesPage() {
                   ))}
                 </select>
               </div>
-              <div className="field-group">
-                <p className="field-group-title">Detalhe</p>
-                <MentionInput
-                  label="Decisão / mudança"
-                  value={draft.decisao ?? ""}
-                  people={people}
-                  onChange={(v) => patchDraft({ decisao: v })}
-                />
-                <MentionInput
-                  label="Evidência"
-                  value={draft.evidencia ?? ""}
-                  people={people}
-                  onChange={(v) => patchDraft({ evidencia: v })}
-                />
-                <MentionInput
-                  label="Resultado parcial"
-                  value={draft.resultado ?? ""}
-                  people={people}
-                  onChange={(v) => patchDraft({ resultado: v })}
-                />
-              </div>
               <MentionInput
                 label="Notas"
                 value={draft.notas ?? ""}
