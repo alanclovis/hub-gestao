@@ -22,7 +22,9 @@ function emptyPendencia(): Pendencia {
 export default function PendenciasPage() {
   const { data, setData, status, error } = useCollection("pendencias");
   const { data: projetos } = useCollection("projetos");
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Pendencia | null>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<"todas" | PendenciaStatus>(
     "aberta",
   );
@@ -35,22 +37,56 @@ export default function PendenciasPage() {
     return list.filter((p) => p.status === filtroStatus);
   }, [data, filtroStatus]);
 
-  const open = data?.find((p) => p.id === openId) ?? null;
-
-  const create = () => {
-    const novo = emptyPendencia();
-    setData((prev) => [novo, ...prev]);
-    setOpenId(novo.id);
+  const closeDrawer = () => {
+    setDraft(null);
+    setIsNew(false);
+    setDirty(false);
   };
 
-  const patch = (next: Pendencia) => {
-    setData((prev) =>
-      prev.map((p) =>
-        p.id === next.id
-          ? { ...next, updatedAt: new Date().toISOString() }
-          : p,
-      ),
-    );
+  const tryClose = () => {
+    if (dirty && !window.confirm("Descartar alterações não salvas?")) return;
+    closeDrawer();
+  };
+
+  const create = () => {
+    setDraft(emptyPendencia());
+    setIsNew(true);
+    setDirty(false);
+  };
+
+  const openExisting = (p: Pendencia) => {
+    setDraft({ ...p });
+    setIsNew(false);
+    setDirty(false);
+  };
+
+  const patchDraft = (partial: Partial<Pendencia>) => {
+    setDraft((prev) => (prev ? { ...prev, ...partial } : prev));
+    setDirty(true);
+  };
+
+  const save = () => {
+    if (!draft) return;
+    if (!draft.titulo.trim()) {
+      window.alert("Preencha o título antes de salvar.");
+      return;
+    }
+    const stamped = { ...draft, updatedAt: new Date().toISOString() };
+    if (isNew) setData((prev) => [stamped, ...prev]);
+    else
+      setData((prev) =>
+        prev.map((p) => (p.id === stamped.id ? stamped : p)),
+      );
+    closeDrawer();
+  };
+
+  const deleteOpen = () => {
+    if (!draft || isNew) {
+      closeDrawer();
+      return;
+    }
+    setData((prev) => prev.filter((p) => p.id !== draft.id));
+    closeDrawer();
   };
 
   return (
@@ -58,7 +94,7 @@ export default function PendenciasPage() {
       <header className="hub-page-head">
         <div>
           <h1>Pendências</h1>
-          <p>O que você precisa fazer — com prazo e notas.</p>
+          <p>Preencha e clique em Salvar.</p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>
@@ -96,7 +132,7 @@ export default function PendenciasPage() {
               type="button"
               key={p.id}
               className={`list-item${p.status === "feita" ? " is-done" : ""}`}
-              onClick={() => setOpenId(p.id)}
+              onClick={() => openExisting(p)}
               style={{ textAlign: "left", width: "100%" }}
             >
               <h3>{p.titulo || "Sem título"}</h3>
@@ -112,35 +148,47 @@ export default function PendenciasPage() {
         </div>
       )}
 
-      {open ? (
+      {draft ? (
         <>
-          <div className="drawer-backdrop" onClick={() => setOpenId(null)} />
+          <div className="drawer-backdrop" onClick={tryClose} />
           <aside className="drawer">
             <div className="drawer-head">
-              <h2>Pendência</h2>
-              <button
-                type="button"
-                className="hub-ghost-btn"
-                onClick={() => setOpenId(null)}
-              >
+              <h2>{isNew ? "Nova pendência" : "Editar pendência"}</h2>
+              <button type="button" className="hub-ghost-btn" onClick={tryClose}>
                 Fechar
               </button>
+            </div>
+            <div className="drawer-actions">
+              <button type="button" className="hub-primary-btn" onClick={save}>
+                Salvar
+              </button>
+              <button type="button" className="hub-secondary-btn" onClick={tryClose}>
+                Cancelar
+              </button>
+              {!isNew ? (
+                <button
+                  type="button"
+                  className="hub-ghost-btn"
+                  onClick={deleteOpen}
+                >
+                  Excluir
+                </button>
+              ) : null}
             </div>
             <div className="field">
               <label>Título</label>
               <input
-                value={open.titulo}
-                onChange={(e) => patch({ ...open, titulo: e.target.value })}
+                value={draft.titulo}
+                onChange={(e) => patchDraft({ titulo: e.target.value })}
               />
             </div>
             <div className="field-row">
               <div className="field">
                 <label>Status</label>
                 <select
-                  value={open.status}
+                  value={draft.status}
                   onChange={(e) =>
-                    patch({
-                      ...open,
+                    patchDraft({
                       status: e.target.value as PendenciaStatus,
                     })
                   }
@@ -153,25 +201,24 @@ export default function PendenciasPage() {
                 <label>Prazo</label>
                 <input
                   type="date"
-                  value={open.prazo ?? ""}
-                  onChange={(e) => patch({ ...open, prazo: e.target.value })}
+                  value={draft.prazo ?? ""}
+                  onChange={(e) => patchDraft({ prazo: e.target.value })}
                 />
               </div>
             </div>
             <div className="field">
               <label>Notas</label>
               <textarea
-                value={open.notas}
-                onChange={(e) => patch({ ...open, notas: e.target.value })}
+                value={draft.notas}
+                onChange={(e) => patchDraft({ notas: e.target.value })}
               />
             </div>
             <div className="field">
               <label>Projeto (opcional)</label>
               <select
-                value={open.projetoId ?? ""}
+                value={draft.projetoId ?? ""}
                 onChange={(e) =>
-                  patch({
-                    ...open,
+                  patchDraft({
                     projetoId: e.target.value || undefined,
                   })
                 }
@@ -184,16 +231,6 @@ export default function PendenciasPage() {
                 ))}
               </select>
             </div>
-            <button
-              type="button"
-              className="hub-ghost-btn"
-              onClick={() => {
-                setData((prev) => prev.filter((p) => p.id !== open.id));
-                setOpenId(null);
-              }}
-            >
-              Excluir
-            </button>
           </aside>
         </>
       ) : null}

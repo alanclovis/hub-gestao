@@ -22,7 +22,9 @@ function emptyOneOnOne(): OneOnOne {
 
 export default function OneOnesPage() {
   const { data, setData, status, error } = useCollection("oneones");
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<OneOnOne | null>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [filtro, setFiltro] = useState("");
 
   const items = useMemo(() => {
@@ -36,22 +38,56 @@ export default function OneOnesPage() {
     );
   }, [data, filtro]);
 
-  const open = data?.find((o) => o.id === openId) ?? null;
-
-  const create = () => {
-    const novo = emptyOneOnOne();
-    setData((prev) => [novo, ...prev]);
-    setOpenId(novo.id);
+  const closeDrawer = () => {
+    setDraft(null);
+    setIsNew(false);
+    setDirty(false);
   };
 
-  const patch = (next: OneOnOne) => {
-    setData((prev) =>
-      prev.map((o) =>
-        o.id === next.id
-          ? { ...next, updatedAt: new Date().toISOString() }
-          : o,
-      ),
-    );
+  const tryClose = () => {
+    if (dirty && !window.confirm("Descartar alterações não salvas?")) return;
+    closeDrawer();
+  };
+
+  const create = () => {
+    setDraft(emptyOneOnOne());
+    setIsNew(true);
+    setDirty(false);
+  };
+
+  const openExisting = (o: OneOnOne) => {
+    setDraft({ ...o });
+    setIsNew(false);
+    setDirty(false);
+  };
+
+  const patchDraft = (partial: Partial<OneOnOne>) => {
+    setDraft((prev) => (prev ? { ...prev, ...partial } : prev));
+    setDirty(true);
+  };
+
+  const save = () => {
+    if (!draft) return;
+    if (!draft.pessoa.trim()) {
+      window.alert("Preencha a pessoa antes de salvar.");
+      return;
+    }
+    const stamped = { ...draft, updatedAt: new Date().toISOString() };
+    if (isNew) setData((prev) => [stamped, ...prev]);
+    else
+      setData((prev) =>
+        prev.map((o) => (o.id === stamped.id ? stamped : o)),
+      );
+    closeDrawer();
+  };
+
+  const deleteOpen = () => {
+    if (!draft || isNew) {
+      closeDrawer();
+      return;
+    }
+    setData((prev) => prev.filter((o) => o.id !== draft.id));
+    closeDrawer();
   };
 
   return (
@@ -59,7 +95,7 @@ export default function OneOnesPage() {
       <header className="hub-page-head">
         <div>
           <h1>1:1s</h1>
-          <p>Pauta, combinados e follow-ups por pessoa.</p>
+          <p>Preencha e clique em Salvar.</p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>
@@ -94,7 +130,7 @@ export default function OneOnesPage() {
               type="button"
               key={o.id}
               className="list-item"
-              onClick={() => setOpenId(o.id)}
+              onClick={() => openExisting(o)}
               style={{ textAlign: "left", width: "100%" }}
             >
               <h3>{o.pessoa || "Sem pessoa"}</h3>
@@ -107,70 +143,69 @@ export default function OneOnesPage() {
         </div>
       )}
 
-      {open ? (
+      {draft ? (
         <>
-          <div className="drawer-backdrop" onClick={() => setOpenId(null)} />
+          <div className="drawer-backdrop" onClick={tryClose} />
           <aside className="drawer">
             <div className="drawer-head">
-              <h2>1:1</h2>
-              <button
-                type="button"
-                className="hub-ghost-btn"
-                onClick={() => setOpenId(null)}
-              >
+              <h2>{isNew ? "Novo 1:1" : "Editar 1:1"}</h2>
+              <button type="button" className="hub-ghost-btn" onClick={tryClose}>
                 Fechar
               </button>
+            </div>
+            <div className="drawer-actions">
+              <button type="button" className="hub-primary-btn" onClick={save}>
+                Salvar
+              </button>
+              <button type="button" className="hub-secondary-btn" onClick={tryClose}>
+                Cancelar
+              </button>
+              {!isNew ? (
+                <button
+                  type="button"
+                  className="hub-ghost-btn"
+                  onClick={deleteOpen}
+                >
+                  Excluir
+                </button>
+              ) : null}
             </div>
             <div className="field">
               <label>Pessoa</label>
               <input
-                value={open.pessoa}
-                onChange={(e) => patch({ ...open, pessoa: e.target.value })}
+                value={draft.pessoa}
+                onChange={(e) => patchDraft({ pessoa: e.target.value })}
               />
             </div>
             <div className="field">
               <label>Data</label>
               <input
                 type="date"
-                value={open.data}
-                onChange={(e) => patch({ ...open, data: e.target.value })}
+                value={draft.data}
+                onChange={(e) => patchDraft({ data: e.target.value })}
               />
             </div>
             <div className="field">
               <label>Pauta</label>
               <textarea
-                value={open.pauta}
-                onChange={(e) => patch({ ...open, pauta: e.target.value })}
+                value={draft.pauta}
+                onChange={(e) => patchDraft({ pauta: e.target.value })}
               />
             </div>
             <div className="field">
               <label>Combinados</label>
               <textarea
-                value={open.combinados}
-                onChange={(e) =>
-                  patch({ ...open, combinados: e.target.value })
-                }
+                value={draft.combinados}
+                onChange={(e) => patchDraft({ combinados: e.target.value })}
               />
             </div>
             <div className="field">
               <label>Follow-ups</label>
               <textarea
-                value={open.followUps}
-                onChange={(e) =>
-                  patch({ ...open, followUps: e.target.value })
-                }
+                value={draft.followUps}
+                onChange={(e) => patchDraft({ followUps: e.target.value })}
               />
             </div>
-            <button
-              type="button"
-              className="hub-ghost-btn"
-              onClick={() => {
-                setData((prev) => prev.filter((o) => o.id !== open.id));
-                setOpenId(null);
-              }}
-            >
-              Excluir
-            </button>
           </aside>
         </>
       ) : null}

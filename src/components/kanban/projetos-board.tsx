@@ -103,16 +103,48 @@ function Column({
   );
 }
 
+function emptyUpdateDraft(): ProjetoUpdate {
+  return {
+    id: "",
+    date: new Date().toISOString().slice(0, 10),
+    oQueFiz: "",
+    decisao: "",
+    evidencia: "",
+    resultado: "",
+  };
+}
+
+function newProjeto(): Projeto {
+  const now = new Date().toISOString();
+  return {
+    id: nanoid(),
+    titulo: "",
+    status: "backlog",
+    kr: "Rotina / Projeto sem KR direto",
+    periodo: "",
+    papel: "Owner",
+    impacto: "",
+    descricao: "",
+    links: [],
+    destaque: false,
+    updates: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 function ProjectDrawer({
-  projeto,
-  onChange,
+  initial,
+  isNew,
+  onSave,
   onClose,
   onDelete,
   onUpdateMutated,
   people = [],
 }: {
-  projeto: Projeto;
-  onChange: (next: Projeto) => void;
+  initial: Projeto;
+  isNew: boolean;
+  onSave: (next: Projeto) => void;
   onClose: () => void;
   onDelete: () => void;
   people?: string[];
@@ -122,103 +154,157 @@ function ProjectDrawer({
     updateId?: string;
   }) => void;
 }) {
-  const [draft, setDraft] = useState<ProjetoUpdate>({
-    id: "",
-    date: new Date().toISOString().slice(0, 10),
-    oQueFiz: "",
-    decisao: "",
-    evidencia: "",
-    resultado: "",
-  });
+  const [local, setLocal] = useState<Projeto>(() => ({
+    ...initial,
+    updates: initial.updates.map((u) => ({ ...u })),
+    links: [...initial.links],
+  }));
+  const [dirty, setDirty] = useState(false);
+  const [updateDraft, setUpdateDraft] = useState<ProjetoUpdate>(emptyUpdateDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const emptyDraft = (): ProjetoUpdate => ({
-    id: "",
-    date: new Date().toISOString().slice(0, 10),
-    oQueFiz: "",
-    decisao: "",
-    evidencia: "",
-    resultado: "",
-  });
+  const patchLocal = (partial: Partial<Projeto>) => {
+    setLocal((prev) => ({ ...prev, ...partial }));
+    setDirty(true);
+  };
 
-  const patch = (partial: Partial<Projeto>) => {
-    onChange({
-      ...projeto,
-      ...partial,
-      updatedAt: new Date().toISOString(),
-    });
+  const tryClose = () => {
+    if (dirty && !window.confirm("Descartar alterações não salvas?")) return;
+    onClose();
   };
 
   const clearUpdateForm = () => {
     setEditingId(null);
-    setDraft(emptyDraft());
+    setUpdateDraft(emptyUpdateDraft());
   };
 
-  const saveUpdate = () => {
-    if (!draft.oQueFiz.trim()) return;
-    if (editingId) {
-      const item: ProjetoUpdate = { ...draft, id: editingId };
-      patch({
-        updates: projeto.updates.map((u) => (u.id === editingId ? item : u)),
-      });
-      onUpdateMutated?.({ action: "upsert", update: item });
-    } else {
-      const item: ProjetoUpdate = { ...draft, id: nanoid() };
-      patch({ updates: [item, ...projeto.updates] });
-      onUpdateMutated?.({ action: "upsert", update: item });
+  const saveUpdateToLocal = () => {
+    if (!updateDraft.oQueFiz.trim()) {
+      window.alert('Preencha "O que fiz" antes de adicionar o update.');
+      return;
     }
+    if (editingId) {
+      setLocal((prev) => ({
+        ...prev,
+        updates: prev.updates.map((u) =>
+          u.id === editingId ? { ...updateDraft, id: editingId } : u,
+        ),
+      }));
+    } else {
+      const item: ProjetoUpdate = { ...updateDraft, id: nanoid() };
+      setLocal((prev) => ({
+        ...prev,
+        updates: [item, ...prev.updates],
+      }));
+    }
+    setDirty(true);
     clearUpdateForm();
   };
 
-  const deleteUpdate = () => {
+  const deleteUpdateFromLocal = () => {
     if (!editingId) return;
-    const id = editingId;
-    patch({ updates: projeto.updates.filter((u) => u.id !== id) });
-    onUpdateMutated?.({ action: "delete", updateId: id });
+    setLocal((prev) => ({
+      ...prev,
+      updates: prev.updates.filter((u) => u.id !== editingId),
+    }));
+    setDirty(true);
     clearUpdateForm();
   };
 
   const startEdit = (u: ProjetoUpdate) => {
     setEditingId(u.id);
-    setDraft({ ...u });
+    setUpdateDraft({ ...u });
+  };
+
+  const save = () => {
+    if (!local.titulo.trim()) {
+      window.alert("Preencha o título antes de salvar.");
+      return;
+    }
+    const stamped = { ...local, updatedAt: new Date().toISOString() };
+    const prevIds = new Set(initial.updates.map((u) => u.id));
+    const nextIds = new Set(stamped.updates.map((u) => u.id));
+
+    for (const id of prevIds) {
+      if (!nextIds.has(id)) {
+        onUpdateMutated?.({ action: "delete", updateId: id });
+      }
+    }
+    for (const u of stamped.updates) {
+      const before = initial.updates.find((x) => x.id === u.id);
+      if (
+        !before ||
+        before.date !== u.date ||
+        before.oQueFiz !== u.oQueFiz ||
+        before.decisao !== u.decisao ||
+        before.evidencia !== u.evidencia ||
+        before.resultado !== u.resultado
+      ) {
+        onUpdateMutated?.({ action: "upsert", update: u });
+      }
+    }
+
+    onSave(stamped);
+    setDirty(false);
   };
 
   return (
     <>
-      <div className="drawer-backdrop" onClick={onClose} />
+      <div className="drawer-backdrop" onClick={tryClose} />
       <aside className="drawer">
         <div className="drawer-head">
-          <h2>Projeto</h2>
-          <button type="button" className="hub-ghost-btn" onClick={onClose}>
+          <h2>{isNew ? "Novo projeto" : "Editar projeto"}</h2>
+          <button type="button" className="hub-ghost-btn" onClick={tryClose}>
             Fechar
+          </button>
+        </div>
+
+        <div className="drawer-actions">
+          <button type="button" className="hub-primary-btn" onClick={save}>
+            Salvar
+          </button>
+          <button type="button" className="hub-secondary-btn" onClick={tryClose}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="hub-secondary-btn"
+            onClick={() => {
+              const text = buildProjetoReport(local);
+              setReportText(text);
+              setCopied(false);
+              setReportOpen(true);
+            }}
+          >
+            Gerar relatório
           </button>
         </div>
 
         <div className="field">
           <label>Título</label>
           <input
-            value={projeto.titulo}
-            onChange={(e) => patch({ titulo: e.target.value })}
+            value={local.titulo}
+            onChange={(e) => patchLocal({ titulo: e.target.value })}
           />
         </div>
         <MentionInput
           label="Descrição e contexto"
-          value={projeto.descricao}
+          value={local.descricao}
           people={people}
           multiline
           rows={3}
-          onChange={(v) => patch({ descricao: v })}
+          onChange={(v) => patchLocal({ descricao: v })}
         />
         <div className="field-row">
           <div className="field">
             <label>Status</label>
             <select
-              value={projeto.status}
+              value={local.status}
               onChange={(e) =>
-                patch({ status: e.target.value as ProjetoStatus })
+                patchLocal({ status: e.target.value as ProjetoStatus })
               }
             >
               {STATUS_COLUMNS.map((c) => (
@@ -231,9 +317,9 @@ function ProjectDrawer({
           <div className="field">
             <label>Papel</label>
             <select
-              value={projeto.papel}
+              value={local.papel}
               onChange={(e) =>
-                patch({ papel: e.target.value as Projeto["papel"] })
+                patchLocal({ papel: e.target.value as Projeto["papel"] })
               }
             >
               {PAPEIS.map((p) => (
@@ -247,8 +333,8 @@ function ProjectDrawer({
         <div className="field">
           <label>KR relacionado</label>
           <input
-            value={projeto.kr}
-            onChange={(e) => patch({ kr: e.target.value })}
+            value={local.kr}
+            onChange={(e) => patchLocal({ kr: e.target.value })}
             placeholder="KR 1.1 — Data Labeling"
           />
         </div>
@@ -256,17 +342,17 @@ function ProjectDrawer({
           <div className="field">
             <label>Período</label>
             <input
-              value={projeto.periodo}
-              onChange={(e) => patch({ periodo: e.target.value })}
+              value={local.periodo}
+              onChange={(e) => patchLocal({ periodo: e.target.value })}
               placeholder="Abr/26 —"
             />
           </div>
           <div className="field">
             <label>Links (um por linha)</label>
             <textarea
-              value={projeto.links.join("\n")}
+              value={local.links.join("\n")}
               onChange={(e) =>
-                patch({
+                patchLocal({
                   links: e.target.value
                     .split("\n")
                     .map((s) => s.trim())
@@ -278,67 +364,61 @@ function ProjectDrawer({
         </div>
         <MentionInput
           label="Impacto / resultado"
-          value={projeto.impacto}
+          value={local.impacto}
           people={people}
           multiline
           rows={2}
-          onChange={(v) => patch({ impacto: v })}
+          onChange={(v) => patchLocal({ impacto: v })}
         />
-
-        <div className="drawer-actions">
-          <button
-            type="button"
-            className="hub-secondary-btn"
-            onClick={() => {
-              const text = buildProjetoReport(projeto);
-              setReportText(text);
-              setCopied(false);
-              setReportOpen(true);
-            }}
-          >
-            Gerar relatório
-          </button>
-        </div>
 
         <div className="update-feed">
           <h3>{editingId ? "Editando update" : "Novo update"}</h3>
+          <p className="empty-hint" style={{ marginTop: 0 }}>
+            Inclua updates abaixo e depois clique em Salvar no topo.
+          </p>
           <div className="field">
             <label>Data</label>
             <input
               type="date"
-              value={draft.date}
-              onChange={(e) => setDraft({ ...draft, date: e.target.value })}
+              value={updateDraft.date}
+              onChange={(e) =>
+                setUpdateDraft({ ...updateDraft, date: e.target.value })
+              }
             />
           </div>
           <MentionInput
             label="O que fiz"
-            value={draft.oQueFiz}
+            value={updateDraft.oQueFiz}
             people={people}
             multiline
             rows={2}
-            onChange={(v) => setDraft({ ...draft, oQueFiz: v })}
+            onChange={(v) => setUpdateDraft({ ...updateDraft, oQueFiz: v })}
           />
           <MentionInput
             label="Decisão / mudança"
-            value={draft.decisao}
+            value={updateDraft.decisao}
             people={people}
-            onChange={(v) => setDraft({ ...draft, decisao: v })}
+            onChange={(v) => setUpdateDraft({ ...updateDraft, decisao: v })}
           />
           <MentionInput
             label="Evidência"
-            value={draft.evidencia}
+            value={updateDraft.evidencia}
             people={people}
-            onChange={(v) => setDraft({ ...draft, evidencia: v })}
+            onChange={(v) => setUpdateDraft({ ...updateDraft, evidencia: v })}
           />
           <MentionInput
             label="Resultado parcial"
-            value={draft.resultado}
+            value={updateDraft.resultado}
             people={people}
-            onChange={(v) => setDraft({ ...draft, resultado: v })}
+            onChange={(v) => setUpdateDraft({ ...updateDraft, resultado: v })}
           />
-          <div className="drawer-actions">
-            <button type="button" className="hub-primary-btn" onClick={saveUpdate}>
-              {editingId ? "Salvar update" : "Adicionar update"}
+          <div className="drawer-actions drawer-actions-footer">
+            <button
+              type="button"
+              className="hub-primary-btn"
+              onClick={saveUpdateToLocal}
+            >
+              {editingId ? "Aplicar update" : "Incluir update"}
             </button>
             {editingId ? (
               <>
@@ -352,7 +432,7 @@ function ProjectDrawer({
                 <button
                   type="button"
                   className="hub-ghost-btn"
-                  onClick={deleteUpdate}
+                  onClick={deleteUpdateFromLocal}
                 >
                   Excluir update
                 </button>
@@ -360,7 +440,7 @@ function ProjectDrawer({
             ) : null}
           </div>
 
-          {projeto.updates.map((u) => (
+          {local.updates.map((u) => (
             <button
               type="button"
               key={u.id}
@@ -369,7 +449,7 @@ function ProjectDrawer({
             >
               <div className="date">
                 {u.date}
-                <span className="muted"> · cliques para editar</span>
+                <span className="muted"> · clique para editar</span>
               </div>
               <div>
                 <strong>O que fiz:</strong> {u.oQueFiz}
@@ -394,9 +474,11 @@ function ProjectDrawer({
         </div>
 
         <div style={{ marginTop: "1.5rem" }}>
-          <button type="button" className="hub-ghost-btn" onClick={onDelete}>
-            Excluir projeto
-          </button>
+          {!isNew ? (
+            <button type="button" className="hub-ghost-btn" onClick={onDelete}>
+              Excluir projeto
+            </button>
+          ) : null}
         </div>
       </aside>
 
@@ -425,7 +507,7 @@ function ProjectDrawer({
               Markdown gerado a partir do card e dos updates — copie ou baixe
               para apresentar / pedir revisão à IA.
             </p>
-            <div className="drawer-actions">
+            <div className="drawer-actions drawer-actions-footer">
               <button
                 type="button"
                 className="hub-primary-btn"
@@ -441,7 +523,7 @@ function ProjectDrawer({
                 type="button"
                 className="hub-secondary-btn"
                 onClick={() =>
-                  downloadTextFile(reportFilename(projeto), reportText)
+                  downloadTextFile(reportFilename(local), reportText)
                 }
               >
                 Baixar .md
@@ -475,7 +557,10 @@ export function ProjetosBoard({
   }) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [drawer, setDrawer] = useState<{
+    projeto: Projeto;
+    isNew: boolean;
+  } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -496,7 +581,6 @@ export function ProjetosBoard({
   }, [projetos]);
 
   const active = projetos.find((p) => p.id === activeId) ?? null;
-  const open = projetos.find((p) => p.id === openId) ?? null;
 
   const onDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
@@ -536,31 +620,27 @@ export function ProjetosBoard({
   };
 
   const createProjeto = () => {
-    const now = new Date().toISOString();
-    const novo: Projeto = {
-      id: nanoid(),
-      titulo: "Novo projeto",
-      status: "backlog",
-      kr: "Rotina / Projeto sem KR direto",
-      periodo: "",
-      papel: "Owner",
-      impacto: "",
-      descricao: "",
-      links: [],
-      destaque: false,
-      updates: [],
-      createdAt: now,
-      updatedAt: now,
-    };
-    onChange([novo, ...projetos]);
-    setOpenId(novo.id);
+    setDrawer({ projeto: newProjeto(), isNew: true });
+  };
+
+  const openExisting = (id: string) => {
+    const p = projetos.find((x) => x.id === id);
+    if (!p) return;
+    setDrawer({
+      projeto: {
+        ...p,
+        updates: p.updates.map((u) => ({ ...u })),
+        links: [...p.links],
+      },
+      isNew: false,
+    });
   };
 
   return (
     <>
       <div className="list-toolbar">
         <p className="empty-hint" style={{ margin: 0 }}>
-          Arraste os cards entre colunas. Clique para editar e registrar updates.
+          Arraste os cards entre colunas. Edite e clique em Salvar no drawer.
         </p>
         <button type="button" className="hub-primary-btn" onClick={createProjeto}>
           + Novo projeto
@@ -580,7 +660,7 @@ export function ProjetosBoard({
               status={col.id}
               label={col.label}
               items={byStatus[col.id]}
-              onOpen={setOpenId}
+              onOpen={openExisting}
             />
           ))}
         </div>
@@ -594,16 +674,21 @@ export function ProjetosBoard({
         </DragOverlay>
       </DndContext>
 
-      {open ? (
+      {drawer ? (
         <ProjectDrawer
-          projeto={open}
-          onClose={() => setOpenId(null)}
-          onChange={(next) =>
-            onChange(projetos.map((p) => (p.id === next.id ? next : p)))
-          }
+          key={drawer.projeto.id}
+          initial={drawer.projeto}
+          isNew={drawer.isNew}
+          onClose={() => setDrawer(null)}
+          onSave={(next) => {
+            if (drawer.isNew) onChange([next, ...projetos]);
+            else
+              onChange(projetos.map((p) => (p.id === next.id ? next : p)));
+            setDrawer(null);
+          }}
           onDelete={() => {
-            onChange(projetos.filter((p) => p.id !== open.id));
-            setOpenId(null);
+            onChange(projetos.filter((p) => p.id !== drawer.projeto.id));
+            setDrawer(null);
           }}
           onUpdateMutated={onUpdateMutated}
           people={people}

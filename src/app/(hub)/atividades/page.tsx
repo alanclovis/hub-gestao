@@ -42,7 +42,9 @@ export default function AtividadesPage() {
   } = useCollection("projetos");
   const { data: feedbacks } = useCollection("feedbacks");
 
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Atividade | null>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [filtro, setFiltro] = useState("");
 
   const people = useMemo(
@@ -80,48 +82,81 @@ export default function AtividadesPage() {
     );
   }, [atividades, filtro]);
 
-  const open = atividades?.find((a) => a.id === openId) ?? null;
-
   const projetoTitulo = (id?: string) =>
     projetos?.find((p) => p.id === id)?.titulo ?? "Avulso";
 
-  const create = () => {
-    const novo = emptyAtividade();
-    setAtividades((prev) => [novo, ...prev]);
-    setOpenId(novo.id);
+  const closeDrawer = () => {
+    setDraft(null);
+    setIsNew(false);
+    setDirty(false);
   };
 
-  const persistAtividade = (
-    next: Atividade,
-    previous: Atividade | null | undefined,
-  ) => {
-    const stamped = { ...next, updatedAt: new Date().toISOString() };
+  const create = () => {
+    setDraft(emptyAtividade());
+    setIsNew(true);
+    setDirty(false);
+  };
+
+  const openExisting = (a: Atividade) => {
+    setDraft({ ...a });
+    setIsNew(false);
+    setDirty(false);
+  };
+
+  const patchDraft = (partial: Partial<Atividade>) => {
+    setDraft((prev) => (prev ? { ...prev, ...partial } : prev));
+    setDirty(true);
+  };
+
+  const save = () => {
+    if (!draft) return;
+    if (!draft.titulo.trim()) {
+      window.alert('Preencha "O que fiz" antes de salvar.');
+      return;
+    }
+    const previous = isNew
+      ? null
+      : (atividades ?? []).find((a) => a.id === draft.id) ?? null;
+    const stamped = { ...draft, updatedAt: new Date().toISOString() };
+
     if (projetos) {
       const synced = syncAtividadeIntoProjetos(projetos, stamped, previous);
       setProjetos(() => synced.projetos);
-      setAtividades((prev) =>
-        prev.map((a) => (a.id === synced.atividade.id ? synced.atividade : a)),
-      );
+      if (isNew) {
+        setAtividades((prev) => [synced.atividade, ...prev]);
+      } else {
+        setAtividades((prev) =>
+          prev.map((a) =>
+            a.id === synced.atividade.id ? synced.atividade : a,
+          ),
+        );
+      }
+    } else if (isNew) {
+      setAtividades((prev) => [stamped, ...prev]);
     } else {
       setAtividades((prev) =>
         prev.map((a) => (a.id === stamped.id ? stamped : a)),
       );
     }
-  };
-
-  const patchOpen = (partial: Partial<Atividade>) => {
-    if (!open) return;
-    const next = { ...open, ...partial };
-    persistAtividade(next, open);
+    closeDrawer();
   };
 
   const deleteOpen = () => {
-    if (!open) return;
-    if (projetos) {
-      setProjetos(() => removeAtividadeMirror(projetos, open));
+    if (!draft || isNew) {
+      closeDrawer();
+      return;
     }
-    setAtividades((prev) => prev.filter((a) => a.id !== open.id));
-    setOpenId(null);
+    const existing = (atividades ?? []).find((a) => a.id === draft.id);
+    if (existing && projetos) {
+      setProjetos(() => removeAtividadeMirror(projetos, existing));
+    }
+    setAtividades((prev) => prev.filter((a) => a.id !== draft.id));
+    closeDrawer();
+  };
+
+  const tryClose = () => {
+    if (dirty && !window.confirm("Descartar alterações não salvas?")) return;
+    closeDrawer();
   };
 
   return (
@@ -130,7 +165,7 @@ export default function AtividadesPage() {
         <div>
           <h1>Atividades</h1>
           <p>
-            Registre o que fez no dia — vincule a um projeto para espelhar como
+            Preencha e clique em Salvar. Vincule a um projeto para espelhar como
             update.
           </p>
         </div>
@@ -167,7 +202,7 @@ export default function AtividadesPage() {
               type="button"
               key={a.id}
               className="list-item"
-              onClick={() => setOpenId(a.id)}
+              onClick={() => openExisting(a)}
               style={{ textAlign: "left", width: "100%" }}
             >
               <h3>{a.titulo || "Sem título"}</h3>
@@ -180,41 +215,54 @@ export default function AtividadesPage() {
         </div>
       )}
 
-      {open ? (
+      {draft ? (
         <>
-          <div className="drawer-backdrop" onClick={() => setOpenId(null)} />
+          <div className="drawer-backdrop" onClick={tryClose} />
           <aside className="drawer">
             <div className="drawer-head">
-              <h2>Atividade</h2>
-              <button
-                type="button"
-                className="hub-ghost-btn"
-                onClick={() => setOpenId(null)}
-              >
+              <h2>{isNew ? "Nova atividade" : "Editar atividade"}</h2>
+              <button type="button" className="hub-ghost-btn" onClick={tryClose}>
                 Fechar
               </button>
+            </div>
+            <div className="drawer-actions">
+              <button type="button" className="hub-primary-btn" onClick={save}>
+                Salvar
+              </button>
+              <button type="button" className="hub-secondary-btn" onClick={tryClose}>
+                Cancelar
+              </button>
+              {!isNew ? (
+                <button
+                  type="button"
+                  className="hub-ghost-btn"
+                  onClick={deleteOpen}
+                >
+                  Excluir
+                </button>
+              ) : null}
             </div>
             <div className="field">
               <label>Data</label>
               <input
                 type="date"
-                value={open.date}
-                onChange={(e) => patchOpen({ date: e.target.value })}
+                value={draft.date}
+                onChange={(e) => patchDraft({ date: e.target.value })}
               />
             </div>
             <MentionInput
               label="O que fiz"
-              value={open.titulo}
+              value={draft.titulo}
               people={people}
               multiline
-              onChange={(v) => patchOpen({ titulo: v })}
+              onChange={(v) => patchDraft({ titulo: v })}
             />
             <div className="field">
               <label>Projeto (opcional)</label>
               <select
-                value={open.projetoId ?? ""}
+                value={draft.projetoId ?? ""}
                 onChange={(e) =>
-                  patchOpen({
+                  patchDraft({
                     projetoId: e.target.value || undefined,
                   })
                 }
@@ -229,38 +277,34 @@ export default function AtividadesPage() {
             </div>
             <MentionInput
               label="Decisão / mudança"
-              value={open.decisao ?? ""}
+              value={draft.decisao ?? ""}
               people={people}
-              onChange={(v) => patchOpen({ decisao: v })}
+              onChange={(v) => patchDraft({ decisao: v })}
             />
             <MentionInput
               label="Evidência"
-              value={open.evidencia ?? ""}
+              value={draft.evidencia ?? ""}
               people={people}
-              onChange={(v) => patchOpen({ evidencia: v })}
+              onChange={(v) => patchDraft({ evidencia: v })}
             />
             <MentionInput
               label="Resultado parcial"
-              value={open.resultado ?? ""}
+              value={draft.resultado ?? ""}
               people={people}
-              onChange={(v) => patchOpen({ resultado: v })}
+              onChange={(v) => patchDraft({ resultado: v })}
             />
             <MentionInput
               label="Notas"
-              value={open.notas ?? ""}
+              value={draft.notas ?? ""}
               people={people}
               multiline
-              onChange={(v) => patchOpen({ notas: v })}
+              onChange={(v) => patchDraft({ notas: v })}
             />
-            {open.projetoId ? (
+            {draft.projetoId ? (
               <p className="empty-hint">
-                Vinculada: esta atividade entra como update no projeto
-                selecionado.
+                Ao salvar, esta atividade entra como update no projeto.
               </p>
             ) : null}
-            <button type="button" className="hub-ghost-btn" onClick={deleteOpen}>
-              Excluir
-            </button>
           </aside>
         </>
       ) : null}

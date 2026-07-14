@@ -166,7 +166,6 @@ export function MentionInput({
           </ul>
         ) : null}
       </div>
-      <p className="mention-hint">Digite @Nome (ex.: @Maria) para mencionar</p>
     </div>
   );
 }

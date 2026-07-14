@@ -38,7 +38,9 @@ export default function FeedbacksPage() {
   const { data, setData, status, error } = useCollection("feedbacks");
   const { data: atividades } = useCollection("atividades");
   const { data: projetos } = useCollection("projetos");
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Feedback | null>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [filtroTexto, setFiltroTexto] = useState("");
   const [pessoa, setPessoa] = useState("");
 
@@ -85,23 +87,58 @@ export default function FeedbacksPage() {
     [pessoa, data, atividades, projetos],
   );
 
-  const open = data?.find((f) => f.id === openId) ?? null;
+  const closeDrawer = () => {
+    setDraft(null);
+    setIsNew(false);
+    setDirty(false);
+  };
+
+  const tryClose = () => {
+    if (dirty && !window.confirm("Descartar alterações não salvas?")) return;
+    closeDrawer();
+  };
 
   const create = () => {
     const novo = emptyFeedback();
     if (pessoa) novo.deQuem = pessoa.startsWith("@") ? pessoa.slice(1) : pessoa;
-    setData((prev) => [novo, ...prev]);
-    setOpenId(novo.id);
+    setDraft(novo);
+    setIsNew(true);
+    setDirty(false);
   };
 
-  const patch = (next: Feedback) => {
-    setData((prev) =>
-      prev.map((f) =>
-        f.id === next.id
-          ? { ...next, updatedAt: new Date().toISOString() }
-          : f,
-      ),
-    );
+  const openExisting = (f: Feedback) => {
+    setDraft({ ...f });
+    setIsNew(false);
+    setDirty(false);
+  };
+
+  const patchDraft = (partial: Partial<Feedback>) => {
+    setDraft((prev) => (prev ? { ...prev, ...partial } : prev));
+    setDirty(true);
+  };
+
+  const save = () => {
+    if (!draft) return;
+    if (!draft.tema.trim() && !draft.deQuem.trim()) {
+      window.alert("Preencha ao menos pessoa ou tema antes de salvar.");
+      return;
+    }
+    const stamped = { ...draft, updatedAt: new Date().toISOString() };
+    if (isNew) setData((prev) => [stamped, ...prev]);
+    else
+      setData((prev) =>
+        prev.map((f) => (f.id === stamped.id ? stamped : f)),
+      );
+    closeDrawer();
+  };
+
+  const deleteOpen = () => {
+    if (!draft || isNew) {
+      closeDrawer();
+      return;
+    }
+    setData((prev) => prev.filter((f) => f.id !== draft.id));
+    closeDrawer();
   };
 
   return (
@@ -110,7 +147,7 @@ export default function FeedbacksPage() {
         <div>
           <h1>Feedbacks</h1>
           <p>
-            Filtre por pessoa para ver feedbacks e tudo que menciona @Nome.
+            Filtre por pessoa. Preencha e clique em Salvar.
           </p>
         </div>
         <SaveBadge status={status} error={error} />
@@ -190,7 +227,7 @@ export default function FeedbacksPage() {
               type="button"
               key={f.id}
               className="list-item"
-              onClick={() => setOpenId(f.id)}
+              onClick={() => openExisting(f)}
               style={{ textAlign: "left", width: "100%" }}
             >
               <h3>{f.tema || "Sem tema"}</h3>
@@ -202,59 +239,62 @@ export default function FeedbacksPage() {
         </div>
       )}
 
-      {open ? (
+      {draft ? (
         <>
-          <div className="drawer-backdrop" onClick={() => setOpenId(null)} />
+          <div className="drawer-backdrop" onClick={tryClose} />
           <aside className="drawer">
             <div className="drawer-head">
-              <h2>Feedback</h2>
-              <button
-                type="button"
-                className="hub-ghost-btn"
-                onClick={() => setOpenId(null)}
-              >
+              <h2>{isNew ? "Novo feedback" : "Editar feedback"}</h2>
+              <button type="button" className="hub-ghost-btn" onClick={tryClose}>
                 Fechar
               </button>
             </div>
+            <div className="drawer-actions">
+              <button type="button" className="hub-primary-btn" onClick={save}>
+                Salvar
+              </button>
+              <button type="button" className="hub-secondary-btn" onClick={tryClose}>
+                Cancelar
+              </button>
+              {!isNew ? (
+                <button
+                  type="button"
+                  className="hub-ghost-btn"
+                  onClick={deleteOpen}
+                >
+                  Excluir
+                </button>
+              ) : null}
+            </div>
             <MentionInput
               label="De quem"
-              value={open.deQuem}
+              value={draft.deQuem}
               people={people}
               placeholder="Maria ou @Maria"
-              onChange={(v) => patch({ ...open, deQuem: v })}
+              onChange={(v) => patchDraft({ deQuem: v })}
             />
             <div className="field">
               <label>Data</label>
               <input
                 type="date"
-                value={open.data}
-                onChange={(e) => patch({ ...open, data: e.target.value })}
+                value={draft.data}
+                onChange={(e) => patchDraft({ data: e.target.value })}
               />
             </div>
             <MentionInput
               label="Tema"
-              value={open.tema}
+              value={draft.tema}
               people={people}
-              onChange={(v) => patch({ ...open, tema: v })}
+              onChange={(v) => patchDraft({ tema: v })}
             />
             <MentionInput
               label="Citação / contexto"
-              value={open.contexto}
+              value={draft.contexto}
               people={people}
               multiline
               rows={4}
-              onChange={(v) => patch({ ...open, contexto: v })}
+              onChange={(v) => patchDraft({ contexto: v })}
             />
-            <button
-              type="button"
-              className="hub-ghost-btn"
-              onClick={() => {
-                setData((prev) => prev.filter((f) => f.id !== open.id));
-                setOpenId(null);
-              }}
-            >
-              Excluir
-            </button>
           </aside>
         </>
       ) : null}

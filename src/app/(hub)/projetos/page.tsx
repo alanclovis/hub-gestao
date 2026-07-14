@@ -67,8 +67,9 @@ export default function ProjetosPage() {
             update?: ProjetoUpdate;
             updateId?: string;
           }) => {
-            if (!atividades) return;
-            setAtividades(() => syncUpdateIntoAtividades(atividades, payload));
+            setAtividades((prev) =>
+              syncUpdateIntoAtividades(prev, payload),
+            );
           }}
         />
       )}
