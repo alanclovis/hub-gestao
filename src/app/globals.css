@@ -1101,6 +1101,70 @@ select {
   color: var(--ink-muted);
 }
 
+.list-item-selectable {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  cursor: default;
+  padding: 0.65rem 0.85rem 0.65rem 0.75rem;
+}
+
+.list-item-selectable:hover {
+  transform: none;
+}
+
+.list-item-selectable.is-selected {
+  background: var(--teal-soft);
+  border-color: rgba(10, 98, 102, 0.28);
+}
+
+.list-item-check {
+  display: flex;
+  align-items: center;
+  padding-top: 0.35rem;
+  cursor: pointer;
+}
+
+.list-item-check input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--teal);
+  cursor: pointer;
+}
+
+.list-item-selectable .list-item-main {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0.2rem 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.ai-select-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: 12px;
+  background: var(--teal-soft);
+  border: 1px solid rgba(10, 98, 102, 0.2);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.ai-select-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .list-item-row {
   display: flex;
   align-items: center;

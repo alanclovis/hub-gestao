@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTheme } from "@/components/theme-provider";
+import { getAnthropicKey, setAnthropicKey } from "@/lib/ai";
 import type { ThemeId } from "@/lib/theme";
 
 export function SettingsPanel({
@@ -11,8 +13,17 @@ export function SettingsPanel({
   onClose: () => void;
 }) {
   const { themeId, themes, setThemeId } = useTheme();
+  const [anthropicKey, setAnthropicKeyDraft] = useState("");
+
+  useEffect(() => {
+    if (open) setAnthropicKeyDraft(getAnthropicKey());
+  }, [open]);
 
   if (!open) return null;
+
+  const saveKey = () => {
+    setAnthropicKey(anthropicKey);
+  };
 
   return (
     <>
@@ -62,10 +73,45 @@ export function SettingsPanel({
               ))}
             </div>
           </section>
+
+          <section className="settings-section">
+            <h3>Claude (Anthropic)</h3>
+            <p className="empty-hint">
+              Chave usada para gerar feedback a partir de atividades
+              selecionadas. Fica só neste browser.
+            </p>
+            <div className="field">
+              <label htmlFor="anthropic-key">API key</label>
+              <input
+                id="anthropic-key"
+                type="password"
+                autoComplete="off"
+                placeholder="sk-ant-…"
+                value={anthropicKey}
+                onChange={(e) => setAnthropicKeyDraft(e.target.value)}
+                onBlur={saveKey}
+              />
+            </div>
+            <button
+              type="button"
+              className="hub-secondary-btn"
+              onClick={saveKey}
+              style={{ marginTop: "0.5rem" }}
+            >
+              Salvar chave
+            </button>
+          </section>
         </div>
         <div className="drawer-footer">
           <div className="drawer-actions">
-            <button type="button" className="hub-primary-btn" onClick={onClose}>
+            <button
+              type="button"
+              className="hub-primary-btn"
+              onClick={() => {
+                saveKey();
+                onClose();
+              }}
+            >
               Pronto
             </button>
           </div>
