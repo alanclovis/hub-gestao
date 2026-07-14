@@ -1,28 +1,66 @@
 import { nanoid } from "nanoid";
-import type { Pendencia, Projeto, ProjetoUpdate } from "./types";
+import { syncAtividadeIntoProjetos } from "./atividade-sync";
+import type { Atividade, Pendencia, Projeto } from "./types";
 
-/** Ao concluir uma pendência vinculada, registra update no projeto. */
-export function appendPendenciaConcluidaUpdate(
-  projetos: Projeto[],
-  pendencia: Pendencia,
-): Projeto[] {
-  if (!pendencia.projetoId) return projetos;
-  const day = new Date().toISOString().slice(0, 10);
-  const update: ProjetoUpdate = {
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Abertas com prazo vencido, hoje, ou sem prazo. */
+export function isPendenciaDueOpen(p: Pendencia, today = todayISO()): boolean {
+  if (p.status !== "aberta") return false;
+  if (!p.prazo?.trim()) return true;
+  return p.prazo <= today;
+}
+
+export function countDueOpenPendencias(
+  pendencias: Pendencia[] | null | undefined,
+  today = todayISO(),
+): number {
+  return (pendencias ?? []).filter((p) => isPendenciaDueOpen(p, today)).length;
+}
+
+export function pendenciaToAtividade(p: Pendencia): Atividade {
+  const now = new Date().toISOString();
+  return {
     id: nanoid(),
-    date: day,
-    oQueFiz: `Pendência concluída: ${pendencia.titulo.trim() || "Sem título"}`,
-    decisao: "",
-    evidencia: "",
-    resultado: pendencia.notas?.trim() || "Concluída",
+    date: p.prazo?.trim() || todayISO(),
+    titulo: p.titulo.trim() || "Pendência concluída",
+    notas: p.notas?.trim() || "",
+    projetoId: p.projetoId,
+    createdAt: now,
+    updatedAt: now,
   };
-  return projetos.map((p) =>
-    p.id === pendencia.projetoId
-      ? {
-          ...p,
-          updates: [update, ...p.updates],
-          updatedAt: new Date().toISOString(),
-        }
-      : p,
+}
+
+/**
+ * Conclui a pendência criando uma atividade (e update no projeto, se vinculado).
+ */
+export function completePendenciaAsAtividade(
+  pendencia: Pendencia,
+  projetos: Projeto[],
+  atividades: Atividade[],
+): {
+  pendencia: Pendencia;
+  atividade: Atividade;
+  projetos: Projeto[];
+  atividades: Atividade[];
+} {
+  const atividadeSeed = pendenciaToAtividade(pendencia);
+  const { projetos: nextProjetos, atividade } = syncAtividadeIntoProjetos(
+    projetos,
+    atividadeSeed,
+    null,
   );
+  const stampedPendencia: Pendencia = {
+    ...pendencia,
+    status: "feita",
+    updatedAt: new Date().toISOString(),
+  };
+  return {
+    pendencia: stampedPendencia,
+    atividade,
+    projetos: nextProjetos,
+    atividades: [atividade, ...atividades],
+  };
 }

@@ -179,6 +179,10 @@ select {
 }
 
 .hub-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.72rem 0.9rem;
   border-radius: 12px;
   color: rgba(232, 246, 247, 0.72);
@@ -195,6 +199,25 @@ select {
   background: #f4fffe;
   color: var(--teal-deep);
   font-weight: 600;
+}
+
+.nav-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #f4c15d;
+  color: #3d2a00;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hub-nav-link.is-active .nav-badge {
+  background: var(--teal);
+  color: #f4fffe;
 }
 
 .hub-sidebar-foot {
