@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { MonthCalendar } from "@/components/month-calendar";
 import { SaveBadge } from "@/components/save-badge";
 import { MentionText } from "@/components/mention-text";
 import { useAllData } from "@/hooks/use-collection";
 import { useMonitorias } from "@/hooks/use-monitorias";
+import { buildCalendarEvents } from "@/lib/calendar";
 import { buildInsights, type InsightPeriod } from "@/lib/insights";
 import { formatMinutes, shortFila } from "@/lib/monitorias";
 
 export default function HomePage() {
   const { data, status, error } = useAllData();
   const [period, setPeriod] = useState<InsightPeriod>("semana");
-  const { summary: mon, status: monStatus, error: monError } =
+  const { rows: monRows, summary: mon, status: monStatus, error: monError } =
     useMonitorias(period);
 
   const insights = useMemo(
@@ -20,13 +22,18 @@ export default function HomePage() {
     [data, period],
   );
 
+  const calendarEvents = useMemo(
+    () => (data ? buildCalendarEvents(data, monRows) : []),
+    [data, monRows],
+  );
+
   return (
     <>
       <header className="hub-page-head">
         <div>
           <p className="hub-kicker">Visão geral</p>
-          <h1>Hoje</h1>
-          <p>O que avançou na semana ou no mês.</p>
+          <h1>Agenda</h1>
+          <p>Navegue pelos dias e veja o que você registrou em cada um.</p>
         </div>
         <div className="hub-page-actions">
           <div className="period-toggle" role="group" aria-label="Período">
@@ -49,11 +56,13 @@ export default function HomePage() {
         </div>
       </header>
 
-      {!insights ? (
-        <p className="empty-hint">Carregando insights…</p>
+      {!data || !insights ? (
+        <p className="empty-hint">Carregando agenda…</p>
       ) : (
         <>
-          <div className="overview-grid">
+          <MonthCalendar events={calendarEvents} />
+
+          <div className="overview-grid" style={{ marginTop: "1rem" }}>
             <section className="overview-panel">
               <h2>{insights.periodLabel}</h2>
               <p className="insight-stat">{insights.activityCount}</p>
@@ -99,24 +108,29 @@ export default function HomePage() {
             </section>
 
             <section className="overview-panel">
-              <h2>O que você fez</h2>
-              {insights.timeline.length === 0 ? (
-                <p className="empty-hint">Nada registrado neste período.</p>
-              ) : (
-                <ul className="overview-list">
-                  {insights.timeline.map((t) => (
-                    <li key={t.id}>
-                      <Link href={t.href}>
-                        <MentionText text={t.titulo} />
-                      </Link>
-                      <span className="muted">
-                        {t.date}
-                        {t.projetoTitulo ? ` · ${t.projetoTitulo}` : " · avulsa"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <h2>Atalhos</h2>
+              <ul className="overview-list">
+                <li>
+                  <Link href="/pendencias/">Pendências abertas</Link>
+                  <span className="overview-count">
+                    {insights.pendenciasAbertas}
+                  </span>
+                </li>
+                <li>
+                  <Link href="/projetos/">Projetos em andamento</Link>
+                  <span className="overview-count">
+                    {insights.projetosEmAndamento}
+                  </span>
+                </li>
+                <li>
+                  <Link href="/one-ones/">1:1s</Link>
+                  <span className="muted">abrir</span>
+                </li>
+                <li>
+                  <Link href="/feedbacks/">Feedbacks</Link>
+                  <span className="muted">abrir</span>
+                </li>
+              </ul>
             </section>
           </div>
 
@@ -140,25 +154,24 @@ export default function HomePage() {
             </section>
 
             <section className="overview-panel">
-              <h2>Atalhos</h2>
-              <ul className="overview-list">
-                <li>
-                  <Link href="/pendencias/">Pendências abertas</Link>
-                  <span className="overview-count">{insights.pendenciasAbertas}</span>
-                </li>
-                <li>
-                  <Link href="/projetos/">Projetos em andamento</Link>
-                  <span className="overview-count">{insights.projetosEmAndamento}</span>
-                </li>
-                <li>
-                  <Link href="/monitorias/">Monitorias</Link>
-                  <span className="muted">planilha</span>
-                </li>
-                <li>
-                  <Link href="/one-ones/">1:1s</Link>
-                  <span className="muted">abrir</span>
-                </li>
-              </ul>
+              <h2>Recentes no período</h2>
+              {insights.timeline.length === 0 ? (
+                <p className="empty-hint">Nada registrado neste período.</p>
+              ) : (
+                <ul className="overview-list">
+                  {insights.timeline.map((t) => (
+                    <li key={t.id}>
+                      <Link href={t.href}>
+                        <MentionText text={t.titulo} />
+                      </Link>
+                      <span className="muted">
+                        {t.date}
+                        {t.projetoTitulo ? ` · ${t.projetoTitulo}` : " · avulsa"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
           </div>
         </>
