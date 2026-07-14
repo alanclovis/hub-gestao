@@ -40,6 +40,8 @@ export interface Atividade {
   id: string;
   date: string;
   titulo: string;
+  /** Duração em minutos (ex.: 30, 60). */
+  duracaoMin?: number;
   decisao?: string;
   evidencia?: string;
   resultado?: string;

@@ -111,7 +111,16 @@ export function buildCalendarEvents(
       id: `a-${a.id}`,
       date: a.date,
       titulo: a.titulo || "Sem título",
-      subtitle: proj?.titulo ?? "Avulsa",
+      subtitle: [
+        proj?.titulo ?? "Avulsa",
+        a.duracaoMin
+          ? a.duracaoMin === 60
+            ? "1h"
+            : `${a.duracaoMin} min`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
       kind: "atividade",
       href: "/atividades/",
     });

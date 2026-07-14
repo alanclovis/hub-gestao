@@ -19,6 +19,7 @@ function emptyAtividade(): Atividade {
     id: nanoid(),
     date: now.slice(0, 10),
     titulo: "",
+    duracaoMin: 30,
     decisao: "",
     evidencia: "",
     resultado: "",
@@ -26,6 +27,13 @@ function emptyAtividade(): Atividade {
     createdAt: now,
     updatedAt: now,
   };
+}
+
+function formatDuracao(min?: number): string {
+  if (!min || min <= 0) return "";
+  if (min === 60) return "1h";
+  if (min % 60 === 0) return `${min / 60}h`;
+  return `${min} min`;
 }
 
 export default function AtividadesPage() {
@@ -205,7 +213,9 @@ export default function AtividadesPage() {
             >
               <MentionText as="h3" text={a.titulo || "Sem título"} />
               <p className="meta">
-                {a.date} · {projetoTitulo(a.projetoId)}
+                {a.date}
+                {a.duracaoMin ? ` · ${formatDuracao(a.duracaoMin)}` : ""} ·{" "}
+                {projetoTitulo(a.projetoId)}
                 {a.linkedUpdateId ? " · no projeto" : ""}
               </p>
             </button>
@@ -231,6 +241,22 @@ export default function AtividadesPage() {
                   value={draft.date}
                   onChange={(e) => patchDraft({ date: e.target.value })}
                 />
+              </div>
+              <div className="field">
+                <label>Duração</label>
+                <select
+                  value={draft.duracaoMin ?? 30}
+                  onChange={(e) =>
+                    patchDraft({ duracaoMin: Number(e.target.value) || 30 })
+                  }
+                >
+                  <option value={15}>15 min</option>
+                  <option value={30}>30 min</option>
+                  <option value={45}>45 min</option>
+                  <option value={60}>1 hora</option>
+                  <option value={90}>1h 30min</option>
+                  <option value={120}>2 horas</option>
+                </select>
               </div>
               <MentionInput
                 label="O que fiz"
