@@ -1,17 +1,18 @@
 import type { Atividade } from "./types";
 
-export const ANTHROPIC_KEY_STORAGE = "hub-gestao-anthropic-key";
-export const CLAUDE_MODEL = "claude-haiku-4-5";
+export const GEMINI_KEY_STORAGE = "hub-gestao-gemini-key";
+/** Flash: gratuito no AI Studio e bom para resumos curtos. */
+export const GEMINI_MODEL = "gemini-2.0-flash";
 
-export function getAnthropicKey(): string {
+export function getGeminiKey(): string {
   if (typeof window === "undefined") return "";
-  return localStorage.getItem(ANTHROPIC_KEY_STORAGE)?.trim() ?? "";
+  return localStorage.getItem(GEMINI_KEY_STORAGE)?.trim() ?? "";
 }
 
-export function setAnthropicKey(key: string): void {
+export function setGeminiKey(key: string): void {
   const trimmed = key.trim();
-  if (!trimmed) localStorage.removeItem(ANTHROPIC_KEY_STORAGE);
-  else localStorage.setItem(ANTHROPIC_KEY_STORAGE, trimmed);
+  if (!trimmed) localStorage.removeItem(GEMINI_KEY_STORAGE);
+  else localStorage.setItem(GEMINI_KEY_STORAGE, trimmed);
 }
 
 export type FeedbackContextItem = {
@@ -63,32 +64,46 @@ export async function generateFeedbackSummary(
   apiKey: string,
 ): Promise<string> {
   if (!apiKey.trim()) {
-    throw new Error("Configure a chave da Anthropic em Configurações.");
+    throw new Error("Configure a chave do Gemini em Configurações.");
   }
   if (!items.length) {
     throw new Error("Selecione ao menos uma atividade.");
   }
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/` +
+    `${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey.trim())}`;
+
+  const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey.trim(),
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 800,
-      system:
-        "Você é um assistente de gestão que resume atividades em feedback profissional curto.",
-      messages: [{ role: "user", content: buildUserPrompt(items) }],
+      systemInstruction: {
+        parts: [
+          {
+            text: "Você é um assistente de gestão que resume atividades em feedback profissional curto.",
+          },
+        ],
+      },
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: buildUserPrompt(items) }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 800,
+      },
     }),
   });
 
   const raw = await res.text();
   let data: {
-    content?: { type: string; text?: string }[];
+    candidates?: {
+      content?: { parts?: { text?: string }[] };
+      finishReason?: string;
+    }[];
     error?: { message?: string };
   } = {};
   try {
@@ -100,16 +115,15 @@ export async function generateFeedbackSummary(
   if (!res.ok) {
     const msg =
       data.error?.message ||
-      (raw.slice(0, 180) || `Erro Anthropic (${res.status})`);
+      (raw.slice(0, 200) || `Erro Gemini (${res.status})`);
     throw new Error(msg);
   }
 
-  const text = (data.content ?? [])
-    .filter((c) => c.type === "text" && c.text)
-    .map((c) => c.text!)
-    .join("\n")
+  const text = (data.candidates?.[0]?.content?.parts ?? [])
+    .map((p) => p.text ?? "")
+    .join("")
     .trim();
 
-  if (!text) throw new Error("A Claude não retornou texto.");
+  if (!text) throw new Error("O Gemini não retornou texto.");
   return text;
 }

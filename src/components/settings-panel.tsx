@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "@/components/theme-provider";
-import { getAnthropicKey, setAnthropicKey } from "@/lib/ai";
+import { getGeminiKey, setGeminiKey } from "@/lib/ai";
 import type { ThemeId } from "@/lib/theme";
 
 export function SettingsPanel({
@@ -13,16 +13,16 @@ export function SettingsPanel({
   onClose: () => void;
 }) {
   const { themeId, themes, setThemeId } = useTheme();
-  const [anthropicKey, setAnthropicKeyDraft] = useState("");
+  const [geminiKey, setGeminiKeyDraft] = useState("");
 
   useEffect(() => {
-    if (open) setAnthropicKeyDraft(getAnthropicKey());
+    if (open) setGeminiKeyDraft(getGeminiKey());
   }, [open]);
 
   if (!open) return null;
 
   const saveKey = () => {
-    setAnthropicKey(anthropicKey);
+    setGeminiKey(geminiKey);
   };
 
   return (
@@ -75,20 +75,27 @@ export function SettingsPanel({
           </section>
 
           <section className="settings-section">
-            <h3>Claude (Anthropic)</h3>
+            <h3>Gemini (Google)</h3>
             <p className="empty-hint">
-              Chave usada para gerar feedback a partir de atividades
-              selecionadas. Fica só neste browser.
+              Chave gratuita do{" "}
+              <a
+                href="https://aistudio.google.com/apikey"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Google AI Studio
+              </a>
+              . Usada para gerar feedback das atividades. Fica só neste browser.
             </p>
             <div className="field">
-              <label htmlFor="anthropic-key">API key</label>
+              <label htmlFor="gemini-key">API key</label>
               <input
-                id="anthropic-key"
+                id="gemini-key"
                 type="password"
                 autoComplete="off"
-                placeholder="sk-ant-…"
-                value={anthropicKey}
-                onChange={(e) => setAnthropicKeyDraft(e.target.value)}
+                placeholder="AIza…"
+                value={geminiKey}
+                onChange={(e) => setGeminiKeyDraft(e.target.value)}
                 onBlur={saveKey}
               />
             </div>

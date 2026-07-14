@@ -5,7 +5,7 @@ import { MentionInput } from "@/components/mention-input";
 import { MentionText } from "@/components/mention-text";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
-import { getAnthropicKey } from "@/lib/ai";
+import { getGeminiKey } from "@/lib/ai";
 import {
   removeAtividadeMirror,
   syncAtividadeIntoProjetos,
@@ -115,9 +115,9 @@ export default function AtividadesPage() {
       window.alert("Selecione ao menos uma atividade.");
       return;
     }
-    if (!getAnthropicKey()) {
+    if (!getGeminiKey()) {
       window.alert(
-        "Configure a API key da Anthropic em Configurações (ícone de engrenagem).",
+        "Configure a API key do Gemini em Configurações (ícone de engrenagem).",
       );
       return;
     }
@@ -212,7 +212,7 @@ export default function AtividadesPage() {
           <h1>Atividades</h1>
           <p>
             Registre o que fez, selecione itens e gere um feedback resumido com
-            Claude.
+            Gemini.
           </p>
         </div>
         <SaveBadge status={status} error={error} />

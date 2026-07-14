@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   generateFeedbackSummary,
-  getAnthropicKey,
+  getGeminiKey,
   toFeedbackContext,
   type FeedbackContextItem,
 } from "@/lib/ai";
@@ -39,7 +39,7 @@ export function AiFeedbackDrawer({
       atividades,
       projetoTitulo,
     );
-    const key = getAnthropicKey();
+    const key = getGeminiKey();
 
     void generateFeedbackSummary(ctx, key)
       .then((out) => {
@@ -76,7 +76,7 @@ export function AiFeedbackDrawer({
       <aside className="drawer" aria-label="Feedback gerado por IA">
         <div className="drawer-head">
           <div>
-            <p className="hub-kicker">Claude</p>
+            <p className="hub-kicker">Gemini</p>
             <h2>Feedback resumido</h2>
           </div>
           <button type="button" className="hub-ghost-btn" onClick={onClose}>
@@ -91,7 +91,7 @@ export function AiFeedbackDrawer({
             quiser.
           </p>
           {status === "loading" ? (
-            <p className="empty-hint">Gerando com Claude…</p>
+            <p className="empty-hint">Gerando com Gemini…</p>
           ) : null}
           {status === "error" ? (
             <p className="empty-hint" style={{ color: "var(--danger)" }}>
