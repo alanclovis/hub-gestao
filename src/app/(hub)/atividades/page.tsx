@@ -19,7 +19,6 @@ function emptyAtividade(): Atividade {
     id: nanoid(),
     date: now.slice(0, 10),
     titulo: "",
-    duracaoMin: 30,
     decisao: "",
     evidencia: "",
     resultado: "",
@@ -243,13 +242,17 @@ export default function AtividadesPage() {
                 />
               </div>
               <div className="field">
-                <label>Duração</label>
+                <label>Duração (opcional)</label>
                 <select
-                  value={draft.duracaoMin ?? 30}
-                  onChange={(e) =>
-                    patchDraft({ duracaoMin: Number(e.target.value) || 30 })
-                  }
+                  value={draft.duracaoMin ?? ""}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    patchDraft({
+                      duracaoMin: raw ? Number(raw) : undefined,
+                    });
+                  }}
                 >
+                  <option value="">Sem duração</option>
                   <option value={15}>15 min</option>
                   <option value={30}>30 min</option>
                   <option value={45}>45 min</option>

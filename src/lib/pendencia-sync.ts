@@ -26,7 +26,6 @@ export function pendenciaToAtividade(p: Pendencia): Atividade {
     id: nanoid(),
     date: p.prazo?.trim() || todayISO(),
     titulo: p.titulo.trim() || "Pendência concluída",
-    duracaoMin: 30,
     notas: p.notas?.trim() || "",
     projetoId: p.projetoId,
     createdAt: now,
