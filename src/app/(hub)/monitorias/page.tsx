@@ -5,6 +5,7 @@ import { useMonitorias } from "@/hooks/use-monitorias";
 import {
   formatBrDate,
   formatMinDec,
+  formatMinutes,
   MONITORIAS_SHEET_URL,
   type MonitoriasPeriod,
 } from "@/lib/monitorias";
@@ -124,9 +125,9 @@ export default function MonitoriasPage() {
             <div className="qi-kpi">
               <span className="qi-kpi-label">TS total</span>
               <span className="qi-kpi-value">
-                {formatMinDec(summary.minutos)}
+                {formatMinutes(summary.minutos)}
               </span>
-              <span className="qi-kpi-sub">minutos</span>
+              <span className="qi-kpi-sub">em horas</span>
             </div>
             <div className="qi-kpi">
               <span className="qi-kpi-label">Média/caso</span>
@@ -150,7 +151,7 @@ export default function MonitoriasPage() {
             <div className="qi-kpi">
               <span className="qi-kpi-label">TS/slot</span>
               <span className="qi-kpi-value">
-                {formatMinDec(summary.tsPorSlot)}
+                {formatMinutes(summary.tsPorSlot)}
               </span>
               <span className="qi-kpi-sub">média</span>
             </div>
