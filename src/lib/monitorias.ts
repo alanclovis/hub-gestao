@@ -5,6 +5,8 @@ export const MONITORIAS_CSV_URL =
 export const MONITORIAS_SHEET_URL =
   "https://docs.google.com/spreadsheets/d/1t0F5B1NdinpGMLW1wTUiWMecAD6uPVChFTYOh7PR2bo/edit?gid=0#gid=0";
 
+export type MonitoriasPeriod = "hoje" | "semana" | "mes" | "custom";
+
 export interface MonitoriaRow {
   data: string;
   slot: string;
@@ -16,6 +18,14 @@ export interface MonitoriaRow {
 
 export interface FilaAgg {
   fila: string;
+  label: string;
+  count: number;
+  minutos: number;
+  mediaPorCaso: number;
+}
+
+export interface SlotAgg {
+  slot: string;
   count: number;
   minutos: number;
 }
@@ -25,9 +35,14 @@ export interface MonitoriasSummary {
   to: string;
   count: number;
   minutos: number;
-  horas: number;
+  mediaPorCaso: number;
+  slotsAtivos: number;
+  casosPorSlot: number;
+  tsPorSlot: number;
   porFila: FilaAgg[];
+  porSlot: SlotAgg[];
   recentes: MonitoriaRow[];
+  geradoEm: string;
 }
 
 function parsePtNumber(raw: string): number {
@@ -36,14 +51,12 @@ function parsePtNumber(raw: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** CSV simples (campos sem quebra de linha; aspas opcionais). */
 export function parseMonitoriasCsv(text: string): MonitoriaRow[] {
   const lines = text.replace(/^\uFEFF/, "").trim().split(/\r?\n/);
   if (lines.length < 2) return [];
 
   const rows: MonitoriaRow[] = [];
   for (let i = 1; i < lines.length; i++) {
-    // ts_min pode vir como "17,45" (aspas) — parser com grupos
     const match = lines[i].match(
       /^([^,]*),([^,]*),([^,]*),([^,]*),("(?:[^"]*)"|[^,]*),(.*)$/,
     );
@@ -74,7 +87,7 @@ export async function fetchMonitorias(
   const text = await res.text();
   if (text.includes("Sign in") && text.includes("accounts.google")) {
     throw new Error(
-      "Planilha inacessível — compartilhe como “Qualquer pessoa com o link” (leitor) ou publique o CSV.",
+      "Planilha inacessível — compartilhe como “Qualquer pessoa com o link” (leitor).",
     );
   }
   return parseMonitoriasCsv(text);
@@ -84,28 +97,90 @@ function inRange(date: string, from: string, to: string): boolean {
   return date >= from && date <= to;
 }
 
+function startOfWeek(d: Date): Date {
+  const x = new Date(d);
+  const day = (x.getDay() + 6) % 7;
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - day);
+  return x;
+}
+
+function toYmd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function monitoriasPeriodRange(
+  period: MonitoriasPeriod,
+  custom?: { from: string; to: string },
+  now = new Date(),
+): { from: string; to: string } {
+  if (period === "custom" && custom?.from && custom?.to) {
+    return { from: custom.from, to: custom.to };
+  }
+  const to = toYmd(now);
+  if (period === "hoje") {
+    return { from: to, to };
+  }
+  if (period === "mes") {
+    return { from: toYmd(new Date(now.getFullYear(), now.getMonth(), 1)), to };
+  }
+  // semana = segunda → hoje (alinhado ao print Quality Insights)
+  const fromDate = startOfWeek(now);
+  const toDate = new Date(fromDate);
+  toDate.setDate(fromDate.getDate() + 6);
+  return { from: toYmd(fromDate), to: toYmd(toDate) };
+}
+
 export function summarizeMonitorias(
   rows: MonitoriaRow[],
   from: string,
   to: string,
 ): MonitoriasSummary {
   const filtered = rows.filter((r) => inRange(r.data, from, to));
-  const byFila = new Map<string, FilaAgg>();
+  const byFila = new Map<string, { count: number; minutos: number }>();
+  const bySlot = new Map<string, { count: number; minutos: number }>();
   let minutos = 0;
 
   filtered.forEach((r) => {
     minutos += r.tsMin;
-    const cur = byFila.get(r.fila) ?? {
-      fila: r.fila,
-      count: 0,
-      minutos: 0,
-    };
-    cur.count += 1;
-    cur.minutos += r.tsMin;
-    byFila.set(r.fila, cur);
+    const f = byFila.get(r.fila) ?? { count: 0, minutos: 0 };
+    f.count += 1;
+    f.minutos += r.tsMin;
+    byFila.set(r.fila, f);
+
+    const s = bySlot.get(r.slot) ?? { count: 0, minutos: 0 };
+    s.count += 1;
+    s.minutos += r.tsMin;
+    bySlot.set(r.slot, s);
   });
 
-  const porFila = [...byFila.values()].sort((a, b) => b.minutos - a.minutos);
+  const count = filtered.length;
+  const slotsAtivos = bySlot.size;
+  const mediaPorCaso = count ? minutos / count : 0;
+  const casosPorSlot = slotsAtivos ? count / slotsAtivos : 0;
+  const tsPorSlot = slotsAtivos ? minutos / slotsAtivos : 0;
+
+  const porFila: FilaAgg[] = [...byFila.entries()]
+    .map(([fila, v]) => ({
+      fila,
+      label: prettyFila(fila),
+      count: v.count,
+      minutos: v.minutos,
+      mediaPorCaso: v.count ? v.minutos / v.count : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  const porSlot: SlotAgg[] = [...bySlot.entries()]
+    .map(([slot, v]) => ({
+      slot,
+      count: v.count,
+      minutos: v.minutos,
+    }))
+    .sort((a, b) => a.slot.localeCompare(b.slot));
+
   const recentes = [...filtered]
     .sort((a, b) => b.registradoEm.localeCompare(a.registradoEm))
     .slice(0, 15);
@@ -113,12 +188,22 @@ export function summarizeMonitorias(
   return {
     from,
     to,
-    count: filtered.length,
+    count,
     minutos,
-    horas: minutos / 60,
+    mediaPorCaso,
+    slotsAtivos,
+    casosPorSlot,
+    tsPorSlot,
     porFila,
+    porSlot,
     recentes,
+    geradoEm: new Date().toLocaleString("pt-BR"),
   };
+}
+
+/** Ex.: 132.9m */
+export function formatMinDec(min: number, digits = 1): string {
+  return `${min.toFixed(digits)}m`;
 }
 
 export function formatMinutes(min: number): string {
@@ -128,9 +213,25 @@ export function formatMinutes(min: number): string {
   return `${h}h ${m.toString().padStart(2, "0")}min`;
 }
 
-export function shortFila(fila: string): string {
-  return fila
+export function prettyFila(fila: string): string {
+  const f = fila
     .replace(/^data-labeling-/, "")
-    .replace(/^hsp-id-/, "hsp/")
-    .replace(/^id-/, "id/");
+    .replace(/catchandrelease/gi, "catch & release")
+    .replace(/catch-and-release/gi, "catch & release")
+    .replace(/-/g, " · ");
+  return f;
+}
+
+export function shortFila(fila: string): string {
+  return prettyFila(fila);
+}
+
+export function toInputDate(ymd: string): string {
+  return ymd;
+}
+
+export function formatBrDate(ymd: string): string {
+  const [y, m, d] = ymd.split("-");
+  if (!y || !m || !d) return ymd;
+  return `${d}/${m}/${y}`;
 }

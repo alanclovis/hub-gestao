@@ -1,15 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   fetchMonitorias,
+  monitoriasPeriodRange,
   summarizeMonitorias,
   type MonitoriaRow,
+  type MonitoriasPeriod,
   type MonitoriasSummary,
 } from "@/lib/monitorias";
-import { periodRange, type InsightPeriod } from "@/lib/insights";
 
-export function useMonitorias(period: InsightPeriod) {
+export function useMonitorias(
+  period: MonitoriasPeriod,
+  customRange?: { from: string; to: string },
+) {
   const [rows, setRows] = useState<MonitoriaRow[] | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "ready">(
     "loading",
@@ -33,10 +37,15 @@ export function useMonitorias(period: InsightPeriod) {
     void reload();
   }, [reload]);
 
-  const { from, to } = periodRange(period);
-  const summary: MonitoriasSummary | null = rows
-    ? summarizeMonitorias(rows, from, to)
-    : null;
+  const { from, to } = useMemo(
+    () => monitoriasPeriodRange(period, customRange),
+    [period, customRange],
+  );
+
+  const summary: MonitoriasSummary | null = useMemo(
+    () => (rows ? summarizeMonitorias(rows, from, to) : null),
+    [rows, from, to],
+  );
 
   return { rows, summary, status, error, reload, from, to };
 }
