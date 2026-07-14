@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SaveBadge } from "@/components/save-badge";
+import { MentionText } from "@/components/mention-text";
 import { useAllData } from "@/hooks/use-collection";
 import { useMonitorias } from "@/hooks/use-monitorias";
 import { buildInsights, type InsightPeriod } from "@/lib/insights";
@@ -106,7 +107,7 @@ export default function HomePage() {
                   {insights.timeline.map((t) => (
                     <li key={t.id}>
                       <Link href={t.href}>
-                        <span>{t.titulo}</span>
+                        <MentionText text={t.titulo} />
                       </Link>
                       <span className="muted">
                         {t.date}

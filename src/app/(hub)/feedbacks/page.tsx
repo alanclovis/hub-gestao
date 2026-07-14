@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { MentionInput } from "@/components/mention-input";
+import { MentionText } from "@/components/mention-text";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
 import {
@@ -191,7 +192,8 @@ export default function FeedbacksPage() {
                 <li key={h.id}>
                   <Link href={h.href}>
                     <span>
-                      [{kindLabel[h.kind]}] {h.titulo}
+                      [{kindLabel[h.kind]}]{" "}
+                      <MentionText text={h.titulo} />
                     </span>
                   </Link>
                   <span className="muted">
@@ -218,7 +220,7 @@ export default function FeedbacksPage() {
               onClick={() => openExisting(f)}
               style={{ textAlign: "left", width: "100%" }}
             >
-              <h3>{f.tema || "Sem tema"}</h3>
+              <MentionText as="h3" text={f.tema || "Sem tema"} />
               <p className="meta">
                 {f.deQuem || "—"} · {f.data}
               </p>

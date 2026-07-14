@@ -1,6 +1,7 @@
 "use client";
 
 import { MentionInput } from "@/components/mention-input";
+import { MentionText } from "@/components/mention-text";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
 import {
@@ -198,7 +199,7 @@ export default function AtividadesPage() {
               onClick={() => openExisting(a)}
               style={{ textAlign: "left", width: "100%" }}
             >
-              <h3>{a.titulo || "Sem título"}</h3>
+              <MentionText as="h3" text={a.titulo || "Sem título"} />
               <p className="meta">
                 {a.date} · {projetoTitulo(a.projetoId)}
                 {a.linkedUpdateId ? " · no projeto" : ""}

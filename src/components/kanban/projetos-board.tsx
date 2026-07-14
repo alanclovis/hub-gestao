@@ -25,6 +25,7 @@ import {
   reportFilename,
 } from "@/lib/report-projeto";
 import { MentionInput } from "@/components/mention-input";
+import { MentionText } from "@/components/mention-text";
 import {
   PAPEIS,
   STATUS_COLUMNS,
@@ -57,7 +58,7 @@ function SortableCard({
       {...listeners}
       onClick={() => onOpen(projeto.id)}
     >
-      <h3>{projeto.titulo || "Sem título"}</h3>
+      <MentionText as="h3" text={projeto.titulo || "Sem título"} />
       <p className="meta">
         {projeto.kr || "Sem KR"} · {projeto.papel}
       </p>
@@ -440,21 +441,25 @@ function ProjectDrawer({
                   <span className="muted"> · clique para editar</span>
                 </div>
                 <div>
-                  <strong>O que fiz:</strong> {u.oQueFiz}
+                  <strong>O que fiz:</strong>{" "}
+                  <MentionText text={u.oQueFiz} />
                 </div>
                 {u.decisao ? (
                   <div>
-                    <strong>Decisão:</strong> {u.decisao}
+                    <strong>Decisão:</strong>{" "}
+                    <MentionText text={u.decisao} />
                   </div>
                 ) : null}
                 {u.evidencia ? (
                   <div>
-                    <strong>Evidência:</strong> {u.evidencia}
+                    <strong>Evidência:</strong>{" "}
+                    <MentionText text={u.evidencia} />
                   </div>
                 ) : null}
                 {u.resultado ? (
                   <div>
-                    <strong>Resultado:</strong> {u.resultado}
+                    <strong>Resultado:</strong>{" "}
+                    <MentionText text={u.resultado} />
                   </div>
                 ) : null}
               </button>
