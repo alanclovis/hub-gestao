@@ -20,6 +20,11 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import {
+  buildProjetoReport,
+  downloadTextFile,
+  reportFilename,
+} from "@/lib/report-projeto";
+import {
   PAPEIS,
   STATUS_COLUMNS,
   type Projeto,
@@ -116,6 +121,9 @@ function ProjectDrawer({
     evidencia: "",
     resultado: "",
   });
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportText, setReportText] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const patch = (partial: Partial<Projeto>) => {
     onChange({
@@ -236,6 +244,21 @@ function ProjectDrawer({
           />
         </div>
 
+        <div className="drawer-actions">
+          <button
+            type="button"
+            className="hub-secondary-btn"
+            onClick={() => {
+              const text = buildProjetoReport(projeto);
+              setReportText(text);
+              setCopied(false);
+              setReportOpen(true);
+            }}
+          >
+            Gerar relatório
+          </button>
+        </div>
+
         <div className="update-feed">
           <h3>Updates diários</h3>
           <div className="field">
@@ -313,6 +336,62 @@ function ProjectDrawer({
           </button>
         </div>
       </aside>
+
+      {reportOpen ? (
+        <div
+          className="report-modal-backdrop"
+          onClick={() => setReportOpen(false)}
+        >
+          <div
+            className="report-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Relatório do projeto"
+          >
+            <div className="drawer-head">
+              <h2>Relatório</h2>
+              <button
+                type="button"
+                className="hub-ghost-btn"
+                onClick={() => setReportOpen(false)}
+              >
+                Fechar
+              </button>
+            </div>
+            <p className="empty-hint" style={{ marginTop: 0 }}>
+              Markdown gerado a partir do card e dos updates — copie ou baixe
+              para apresentar / pedir revisão à IA.
+            </p>
+            <div className="drawer-actions">
+              <button
+                type="button"
+                className="hub-primary-btn"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(reportText);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+              >
+                {copied ? "Copiado!" : "Copiar"}
+              </button>
+              <button
+                type="button"
+                className="hub-secondary-btn"
+                onClick={() =>
+                  downloadTextFile(reportFilename(projeto), reportText)
+                }
+              >
+                Baixar .md
+              </button>
+            </div>
+            <textarea
+              className="report-preview"
+              readOnly
+              value={reportText}
+            />
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

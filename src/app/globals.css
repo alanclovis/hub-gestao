@@ -569,6 +569,49 @@ select {
   width: 100%;
 }
 
+.drawer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.25rem 0 1rem;
+}
+
+.report-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(23, 33, 43, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.report-modal {
+  width: min(640px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.15rem 1.2rem 1.35rem;
+  box-shadow: var(--shadow);
+}
+
+.report-preview {
+  width: 100%;
+  min-height: 320px;
+  margin-top: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #fff;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
 @media (max-width: 960px) {
   .hub-shell {
     grid-template-columns: 1fr;
