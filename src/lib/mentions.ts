@@ -131,7 +131,7 @@ export function findPersonHits(
       titulo: f.tema || "Feedback",
       detalhe: f.deQuem || "—",
       data: f.data,
-      href: "/feedbacks/",
+      href: "/pessoas/",
     });
   });
 

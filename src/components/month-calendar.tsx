@@ -150,14 +150,7 @@ export function MonthCalendar({ events }: MonthCalendarProps) {
 
         <ul className="cal-legend" aria-label="Legenda">
           {(
-            [
-              "atividade",
-              "update",
-              "oneone",
-              "feedback",
-              "pendencia",
-              "monitoria",
-            ] as const
+            ["atividade", "update", "pendencia", "monitoria"] as const
           ).map((kind) => (
             <li key={kind}>
               <span className={`cal-dot cal-chip--${kind}`} />

@@ -640,14 +640,6 @@ select {
   color: var(--highlight-ink, #1a1510);
 }
 
-.cal-chip--oneone {
-  background: #3d6b8a;
-}
-
-.cal-chip--feedback {
-  background: var(--accent, #c45c26);
-}
-
 .cal-chip--pendencia {
   background: var(--danger);
 }
@@ -717,18 +709,6 @@ select {
 .cal-day-item.cal-chip--update {
   background: color-mix(in srgb, var(--highlight) 18%, transparent);
   border-left-color: var(--highlight-deep);
-  color: inherit;
-}
-
-.cal-day-item.cal-chip--oneone {
-  background: color-mix(in srgb, #3d6b8a 12%, transparent);
-  border-left-color: #3d6b8a;
-  color: inherit;
-}
-
-.cal-day-item.cal-chip--feedback {
-  background: color-mix(in srgb, var(--accent, #c45c26) 12%, transparent);
-  border-left-color: var(--accent, #c45c26);
   color: inherit;
 }
 

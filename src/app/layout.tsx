@@ -17,7 +17,7 @@ const body = Source_Sans_3({
 
 export const metadata: Metadata = {
   title: "BF",
-  description: "Seu best friend de gestão — projetos, 1:1s, feedbacks e pendências",
+  description: "Seu best friend de gestão — projetos, atividades, pessoas e pendências",
 };
 
 export default function RootLayout({

@@ -4,8 +4,6 @@ import type { Atividade, CollectionMap, Projeto } from "./types";
 export type CalendarKind =
   | "atividade"
   | "update"
-  | "oneone"
-  | "feedback"
   | "pendencia"
   | "monitoria";
 
@@ -21,8 +19,6 @@ export interface CalendarEvent {
 export const CALENDAR_KIND_LABEL: Record<CalendarKind, string> = {
   atividade: "Atividade",
   update: "Update",
-  oneone: "1:1",
-  feedback: "Feedback",
   pendencia: "Pendência",
   monitoria: "Monitoria",
 };
@@ -133,30 +129,6 @@ export function buildCalendarEvents(
         kind: "update",
         href: "/projetos/",
       });
-    });
-  });
-
-  data.oneones.forEach((o) => {
-    if (!o.data) return;
-    events.push({
-      id: `o-${o.id}`,
-      date: o.data,
-      titulo: o.pessoa || "1:1",
-      subtitle: o.pauta?.trim() || "1:1",
-      kind: "oneone",
-      href: "/one-ones/",
-    });
-  });
-
-  data.feedbacks.forEach((f) => {
-    if (!f.data) return;
-    events.push({
-      id: `f-${f.id}`,
-      date: f.data,
-      titulo: f.tema || "Feedback",
-      subtitle: f.deQuem ? `de ${f.deQuem}` : undefined,
-      kind: "feedback",
-      href: "/feedbacks/",
     });
   });
 

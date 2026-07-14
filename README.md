@@ -1,6 +1,6 @@
 # BF
 
-**BF** (*best friend*) — hub pessoal de gestão: **Projetos** (Kanban), **1:1s**, **Feedbacks** e **Pendências**.
+**BF** (*best friend*) — hub pessoal de gestão: **Projetos** (Kanban), **Atividades**, **Pessoas** (menções), **Monitorias** e **Pendências**.
 
 Dados no seu **Gist privado**. App hospedado no **GitHub Pages** (sem Vercel) — acessível de qualquer PC.
 

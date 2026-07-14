@@ -123,12 +123,12 @@ export default function HomePage() {
                   </span>
                 </li>
                 <li>
-                  <Link href="/one-ones/">1:1s</Link>
-                  <span className="muted">abrir</span>
+                  <Link href="/pessoas/">Pessoas</Link>
+                  <span className="muted">menções</span>
                 </li>
                 <li>
-                  <Link href="/feedbacks/">Feedbacks</Link>
-                  <span className="muted">abrir</span>
+                  <Link href="/monitorias/">Monitorias</Link>
+                  <span className="muted">planilha</span>
                 </li>
               </ul>
             </section>
