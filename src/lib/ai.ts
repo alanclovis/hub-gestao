@@ -1,20 +1,5 @@
 import type { Atividade } from "./types";
 
-export const GEMINI_KEY_STORAGE = "hub-gestao-gemini-key";
-/** Flash: gratuito no AI Studio e bom para resumos curtos. */
-export const GEMINI_MODEL = "gemini-2.0-flash";
-
-export function getGeminiKey(): string {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem(GEMINI_KEY_STORAGE)?.trim() ?? "";
-}
-
-export function setGeminiKey(key: string): void {
-  const trimmed = key.trim();
-  if (!trimmed) localStorage.removeItem(GEMINI_KEY_STORAGE);
-  else localStorage.setItem(GEMINI_KEY_STORAGE, trimmed);
-}
-
 export type FeedbackContextItem = {
   date: string;
   titulo: string;
@@ -34,7 +19,14 @@ export function toFeedbackContext(
   }));
 }
 
-function buildUserPrompt(items: FeedbackContextItem[]): string {
+/** Monta um prompt pronto para colar no Claude (chat). */
+export function buildClaudeFeedbackPrompt(
+  items: FeedbackContextItem[],
+): string {
+  if (!items.length) {
+    throw new Error("Selecione ao menos uma atividade.");
+  }
+
   const blocks = items
     .map((a, i) => {
       const lines = [
@@ -57,73 +49,4 @@ Regras:
 
 Atividades:
 ${blocks}`;
-}
-
-export async function generateFeedbackSummary(
-  items: FeedbackContextItem[],
-  apiKey: string,
-): Promise<string> {
-  if (!apiKey.trim()) {
-    throw new Error("Configure a chave do Gemini em Configurações.");
-  }
-  if (!items.length) {
-    throw new Error("Selecione ao menos uma atividade.");
-  }
-
-  const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/` +
-    `${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey.trim())}`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [
-          {
-            text: "Você é um assistente de gestão que resume atividades em feedback profissional curto.",
-          },
-        ],
-      },
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: buildUserPrompt(items) }],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 800,
-      },
-    }),
-  });
-
-  const raw = await res.text();
-  let data: {
-    candidates?: {
-      content?: { parts?: { text?: string }[] };
-      finishReason?: string;
-    }[];
-    error?: { message?: string };
-  } = {};
-  try {
-    data = JSON.parse(raw) as typeof data;
-  } catch {
-    /* ignore */
-  }
-
-  if (!res.ok) {
-    const msg =
-      data.error?.message ||
-      (raw.slice(0, 200) || `Erro Gemini (${res.status})`);
-    throw new Error(msg);
-  }
-
-  const text = (data.candidates?.[0]?.content?.parts ?? [])
-    .map((p) => p.text ?? "")
-    .join("")
-    .trim();
-
-  if (!text) throw new Error("O Gemini não retornou texto.");
-  return text;
 }

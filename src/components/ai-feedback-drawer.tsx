@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  generateFeedbackSummary,
-  getGeminiKey,
+  buildClaudeFeedbackPrompt,
   toFeedbackContext,
-  type FeedbackContextItem,
 } from "@/lib/ai";
 import type { Atividade } from "@/lib/types";
 
@@ -21,41 +19,22 @@ export function AiFeedbackDrawer({
   onClose: () => void;
 }) {
   const [text, setText] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
-    "idle",
-  );
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    let cancelled = false;
-    setStatus("loading");
-    setError(null);
-    setText("");
     setCopied(false);
-
-    const ctx: FeedbackContextItem[] = toFeedbackContext(
-      atividades,
-      projetoTitulo,
-    );
-    const key = getGeminiKey();
-
-    void generateFeedbackSummary(ctx, key)
-      .then((out) => {
-        if (cancelled) return;
-        setText(out);
-        setStatus("ready");
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Falha ao gerar");
-        setStatus("error");
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const prompt = buildClaudeFeedbackPrompt(
+        toFeedbackContext(atividades, projetoTitulo),
+      );
+      setText(prompt);
+      setError(null);
+    } catch (err) {
+      setText("");
+      setError(err instanceof Error ? err.message : "Falha ao montar o prompt");
+    }
   }, [open, atividades, projetoTitulo]);
 
   if (!open) return null;
@@ -73,11 +52,11 @@ export function AiFeedbackDrawer({
   return (
     <>
       <div className="drawer-backdrop" onClick={onClose} />
-      <aside className="drawer" aria-label="Feedback gerado por IA">
+      <aside className="drawer" aria-label="Prompt para Claude">
         <div className="drawer-head">
           <div>
-            <p className="hub-kicker">Gemini</p>
-            <h2>Feedback resumido</h2>
+            <p className="hub-kicker">Claude</p>
+            <h2>Prompt pronto</h2>
           </div>
           <button type="button" className="hub-ghost-btn" onClick={onClose}>
             Fechar
@@ -85,30 +64,26 @@ export function AiFeedbackDrawer({
         </div>
         <div className="drawer-scroll">
           <p className="empty-hint" style={{ marginBottom: "0.75rem" }}>
-            Com base em {atividades.length} atividade
+            Copie e cole em claude.ai (ou no app). O texto já inclui as{" "}
+            {atividades.length} atividade
             {atividades.length === 1 ? "" : "s"} selecionada
-            {atividades.length === 1 ? "" : "s"}. Edite antes de copiar se
-            quiser.
+            {atividades.length === 1 ? "" : "s"}.
           </p>
-          {status === "loading" ? (
-            <p className="empty-hint">Gerando com Gemini…</p>
-          ) : null}
-          {status === "error" ? (
+          {error ? (
             <p className="empty-hint" style={{ color: "var(--danger)" }}>
               {error}
             </p>
-          ) : null}
-          {status === "ready" || status === "error" ? (
+          ) : (
             <div className="field">
-              <label htmlFor="ai-feedback-text">Texto</label>
+              <label htmlFor="ai-feedback-prompt">Prompt</label>
               <textarea
-                id="ai-feedback-text"
-                rows={10}
+                id="ai-feedback-prompt"
+                rows={14}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
             </div>
-          ) : null}
+          )}
         </div>
         <div className="drawer-footer">
           <div className="drawer-actions">
@@ -118,9 +93,17 @@ export function AiFeedbackDrawer({
               onClick={() => void copy()}
               disabled={!text.trim()}
             >
-              {copied ? "Copiado" : "Copiar"}
+              {copied ? "Copiado" : "Copiar prompt"}
             </button>
-            <button type="button" className="hub-secondary-btn" onClick={onClose}>
+            <a
+              className="hub-secondary-btn"
+              href="https://claude.ai/new"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abrir Claude
+            </a>
+            <button type="button" className="hub-ghost-btn" onClick={onClose}>
               Fechar
             </button>
           </div>

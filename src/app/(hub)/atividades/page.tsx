@@ -5,7 +5,6 @@ import { MentionInput } from "@/components/mention-input";
 import { MentionText } from "@/components/mention-text";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
-import { getGeminiKey } from "@/lib/ai";
 import {
   removeAtividadeMirror,
   syncAtividadeIntoProjetos,
@@ -115,12 +114,6 @@ export default function AtividadesPage() {
       window.alert("Selecione ao menos uma atividade.");
       return;
     }
-    if (!getGeminiKey()) {
-      window.alert(
-        "Configure a API key do Gemini em Configurações (ícone de engrenagem).",
-      );
-      return;
-    }
     setAiOpen(true);
   };
 
@@ -211,8 +204,8 @@ export default function AtividadesPage() {
           <p className="hub-kicker">Dia a dia</p>
           <h1>Atividades</h1>
           <p>
-            Registre o que fez, selecione itens e gere um feedback resumido com
-            Gemini.
+            Registre o que fez, selecione itens e monte um prompt para colar no
+            Claude.
           </p>
         </div>
         <SaveBadge status={status} error={error} />
@@ -241,7 +234,7 @@ export default function AtividadesPage() {
               className="hub-primary-btn"
               onClick={openAiFeedback}
             >
-              Gerar feedback
+              Gerar prompt
             </button>
             <button
               type="button"

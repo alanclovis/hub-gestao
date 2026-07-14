@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useTheme } from "@/components/theme-provider";
-import { getGeminiKey, setGeminiKey } from "@/lib/ai";
 import type { ThemeId } from "@/lib/theme";
 
 export function SettingsPanel({
@@ -13,17 +11,8 @@ export function SettingsPanel({
   onClose: () => void;
 }) {
   const { themeId, themes, setThemeId } = useTheme();
-  const [geminiKey, setGeminiKeyDraft] = useState("");
-
-  useEffect(() => {
-    if (open) setGeminiKeyDraft(getGeminiKey());
-  }, [open]);
 
   if (!open) return null;
-
-  const saveKey = () => {
-    setGeminiKey(geminiKey);
-  };
 
   return (
     <>
@@ -73,52 +62,10 @@ export function SettingsPanel({
               ))}
             </div>
           </section>
-
-          <section className="settings-section">
-            <h3>Gemini (Google)</h3>
-            <p className="empty-hint">
-              Chave gratuita do{" "}
-              <a
-                href="https://aistudio.google.com/apikey"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Google AI Studio
-              </a>
-              . Usada para gerar feedback das atividades. Fica só neste browser.
-            </p>
-            <div className="field">
-              <label htmlFor="gemini-key">API key</label>
-              <input
-                id="gemini-key"
-                type="password"
-                autoComplete="off"
-                placeholder="AIza…"
-                value={geminiKey}
-                onChange={(e) => setGeminiKeyDraft(e.target.value)}
-                onBlur={saveKey}
-              />
-            </div>
-            <button
-              type="button"
-              className="hub-secondary-btn"
-              onClick={saveKey}
-              style={{ marginTop: "0.5rem" }}
-            >
-              Salvar chave
-            </button>
-          </section>
         </div>
         <div className="drawer-footer">
           <div className="drawer-actions">
-            <button
-              type="button"
-              className="hub-primary-btn"
-              onClick={() => {
-                saveKey();
-                onClose();
-              }}
-            >
+            <button type="button" className="hub-primary-btn" onClick={onClose}>
               Pronto
             </button>
           </div>
