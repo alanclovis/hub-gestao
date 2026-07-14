@@ -7,6 +7,7 @@ import {
   formatMinDec,
   formatMinutes,
   MONITORIAS_SHEET_URL,
+  SLOT_MINUTES,
   type MonitoriasPeriod,
 } from "@/lib/monitorias";
 
@@ -26,7 +27,6 @@ export default function MonitoriasPage() {
     setDraftTo(to);
   }, [from, to]);
 
-  const maxSlotCount = summary?.porSlot.reduce((m, s) => Math.max(m, s.count), 0) ?? 1;
   const maxFilaCount = summary?.porFila.reduce((m, f) => Math.max(m, f.count), 0) ?? 1;
 
   const applyCustom = () => {
@@ -137,23 +137,30 @@ export default function MonitoriasPage() {
               <span className="qi-kpi-sub">minutos</span>
             </div>
             <div className="qi-kpi">
-              <span className="qi-kpi-label">Slots ativos</span>
+              <span className="qi-kpi-label">Slots</span>
               <span className="qi-kpi-value">{summary.slotsAtivos}</span>
-              <span className="qi-kpi-sub">períodos 30min</span>
+              <span className="qi-kpi-sub">
+                ocorrências de {SLOT_MINUTES} min
+              </span>
             </div>
             <div className="qi-kpi">
-              <span className="qi-kpi-label">Casos/slot</span>
+              <span className="qi-kpi-label">Capacidade</span>
               <span className="qi-kpi-value">
-                {summary.casosPorSlot.toFixed(1)}
+                {formatMinutes(summary.capacidadeMin)}
               </span>
-              <span className="qi-kpi-sub">média</span>
+              <span className="qi-kpi-sub">
+                slots × {SLOT_MINUTES} min
+              </span>
             </div>
             <div className="qi-kpi">
-              <span className="qi-kpi-label">TS/slot</span>
+              <span className="qi-kpi-label">Ocupação</span>
               <span className="qi-kpi-value">
-                {formatMinutes(summary.tsPorSlot)}
+                {summary.ocupacaoPct.toFixed(0)}%
               </span>
-              <span className="qi-kpi-sub">média</span>
+              <span className="qi-kpi-sub">
+                {formatMinDec(summary.tsPorSlot)}/slot ·{" "}
+                {summary.casosPorSlot.toFixed(1)} casos
+              </span>
             </div>
           </div>
 
@@ -188,27 +195,39 @@ export default function MonitoriasPage() {
             </section>
 
             <section className="overview-panel">
-              <h2>Distribuição por slot</h2>
+              <h2>Distribuição por horário</h2>
+              <p className="empty-hint" style={{ marginTop: "-0.35rem" }}>
+                Média de TS por ocorrência (cap. {SLOT_MINUTES} min).
+              </p>
               {summary.porSlot.length === 0 ? (
                 <p className="empty-hint">Sem casos no período.</p>
               ) : (
                 <ul className="qi-bars">
-                  {summary.porSlot.map((s) => (
-                    <li key={s.slot}>
-                      <div className="qi-bar-head">
-                        <span>{s.slot}</span>
-                        <span className="muted">{s.count} casos</span>
-                      </div>
-                      <div className="qi-bar-track">
-                        <div
-                          className="qi-bar-fill is-slot"
-                          style={{
-                            width: `${Math.max(6, (s.count / maxSlotCount) * 100)}%`,
-                          }}
-                        />
-                      </div>
-                    </li>
-                  ))}
+                  {summary.porSlot.map((s) => {
+                    const occPct = Math.min(
+                      100,
+                      (s.mediaPorOcorrencia / SLOT_MINUTES) * 100,
+                    );
+                    return (
+                      <li key={s.slot}>
+                        <div className="qi-bar-head">
+                          <span>{s.slot}</span>
+                          <span className="muted">
+                            {s.count} casos · {formatMinDec(s.mediaPorOcorrencia)}
+                            /slot · {occPct.toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="qi-bar-track">
+                          <div
+                            className="qi-bar-fill is-slot"
+                            style={{
+                              width: `${Math.max(6, occPct)}%`,
+                            }}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>

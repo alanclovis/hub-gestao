@@ -7,6 +7,9 @@ export const MONITORIAS_SHEET_URL =
 
 export type MonitoriasPeriod = "hoje" | "semana" | "mes" | "custom";
 
+/** Slot dimensionado = bloco de 30 minutos (ocorrência data+horário). */
+export const SLOT_MINUTES = 30;
+
 export interface MonitoriaRow {
   data: string;
   slot: string;
@@ -28,6 +31,10 @@ export interface SlotAgg {
   slot: string;
   count: number;
   minutos: number;
+  /** Quantas ocorrências (dias) desse horário no período. */
+  ocorrencias: number;
+  /** TS médio por ocorrência (cap = 30 min). */
+  mediaPorOcorrencia: number;
 }
 
 export interface MonitoriasSummary {
@@ -36,7 +43,12 @@ export interface MonitoriasSummary {
   count: number;
   minutos: number;
   mediaPorCaso: number;
+  /** Ocorrências únicas de (data, slot). */
   slotsAtivos: number;
+  /** Capacidade dimensionada: slots × 30 min. */
+  capacidadeMin: number;
+  /** TS / capacidade (pode passar de 100%). */
+  ocupacaoPct: number;
   casosPorSlot: number;
   tsPorSlot: number;
   porFila: FilaAgg[];
@@ -141,27 +153,41 @@ export function summarizeMonitorias(
 ): MonitoriasSummary {
   const filtered = rows.filter((r) => inRange(r.data, from, to));
   const byFila = new Map<string, { count: number; minutos: number }>();
-  const bySlot = new Map<string, { count: number; minutos: number }>();
+  const bySlot = new Map<
+    string,
+    { count: number; minutos: number; datas: Set<string> }
+  >();
+  const ocorrencias = new Set<string>();
   let minutos = 0;
 
   filtered.forEach((r) => {
     minutos += r.tsMin;
+    ocorrencias.add(`${r.data}|${r.slot}`);
+
     const f = byFila.get(r.fila) ?? { count: 0, minutos: 0 };
     f.count += 1;
     f.minutos += r.tsMin;
     byFila.set(r.fila, f);
 
-    const s = bySlot.get(r.slot) ?? { count: 0, minutos: 0 };
+    const s = bySlot.get(r.slot) ?? {
+      count: 0,
+      minutos: 0,
+      datas: new Set<string>(),
+    };
     s.count += 1;
     s.minutos += r.tsMin;
+    s.datas.add(r.data);
     bySlot.set(r.slot, s);
   });
 
   const count = filtered.length;
-  const slotsAtivos = bySlot.size;
+  // Slot dimensionado = cada (data, horário), não só o rótulo 08:00 no período.
+  const slotsAtivos = ocorrencias.size;
+  const capacidadeMin = slotsAtivos * SLOT_MINUTES;
   const mediaPorCaso = count ? minutos / count : 0;
   const casosPorSlot = slotsAtivos ? count / slotsAtivos : 0;
   const tsPorSlot = slotsAtivos ? minutos / slotsAtivos : 0;
+  const ocupacaoPct = capacidadeMin ? (minutos / capacidadeMin) * 100 : 0;
 
   const porFila: FilaAgg[] = [...byFila.entries()]
     .map(([fila, v]) => ({
@@ -174,11 +200,16 @@ export function summarizeMonitorias(
     .sort((a, b) => b.count - a.count);
 
   const porSlot: SlotAgg[] = [...bySlot.entries()]
-    .map(([slot, v]) => ({
-      slot,
-      count: v.count,
-      minutos: v.minutos,
-    }))
+    .map(([slot, v]) => {
+      const occ = v.datas.size;
+      return {
+        slot,
+        count: v.count,
+        minutos: v.minutos,
+        ocorrencias: occ,
+        mediaPorOcorrencia: occ ? v.minutos / occ : 0,
+      };
+    })
     .sort((a, b) => a.slot.localeCompare(b.slot));
 
   const recentes = [...filtered]
@@ -192,6 +223,8 @@ export function summarizeMonitorias(
     minutos,
     mediaPorCaso,
     slotsAtivos,
+    capacidadeMin,
+    ocupacaoPct,
     casosPorSlot,
     tsPorSlot,
     porFila,
