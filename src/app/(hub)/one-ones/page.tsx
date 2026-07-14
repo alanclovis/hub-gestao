@@ -95,24 +95,17 @@ export default function OneOnesPage() {
       <header className="hub-page-head">
         <div>
           <h1>1:1s</h1>
-          <p>Preencha e clique em Salvar.</p>
+          <p>Pautas, combinados e follow-ups.</p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>
 
       <div className="list-toolbar">
         <input
+          className="list-filter"
           placeholder="Filtrar por pessoa ou pauta…"
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: 200,
-            border: "1px solid var(--line)",
-            borderRadius: 10,
-            padding: "0.55rem 0.75rem",
-            background: "#fff",
-          }}
         />
         <button type="button" className="hub-primary-btn" onClick={create}>
           + Novo 1:1
@@ -153,58 +146,69 @@ export default function OneOnesPage() {
                 Fechar
               </button>
             </div>
-            <div className="drawer-actions">
-              <button type="button" className="hub-primary-btn" onClick={save}>
-                Salvar
-              </button>
-              <button type="button" className="hub-secondary-btn" onClick={tryClose}>
-                Cancelar
-              </button>
-              {!isNew ? (
+            <div className="drawer-scroll">
+              <div className="field">
+                <label>Pessoa</label>
+                <input
+                  value={draft.pessoa}
+                  onChange={(e) => patchDraft({ pessoa: e.target.value })}
+                />
+              </div>
+              <div className="field">
+                <label>Data</label>
+                <input
+                  type="date"
+                  value={draft.data}
+                  onChange={(e) => patchDraft({ data: e.target.value })}
+                />
+              </div>
+              <div className="field">
+                <label>Pauta</label>
+                <textarea
+                  rows={3}
+                  value={draft.pauta}
+                  onChange={(e) => patchDraft({ pauta: e.target.value })}
+                />
+              </div>
+              <div className="field">
+                <label>Combinados</label>
+                <textarea
+                  rows={3}
+                  value={draft.combinados}
+                  onChange={(e) => patchDraft({ combinados: e.target.value })}
+                />
+              </div>
+              <div className="field">
+                <label>Follow-ups</label>
+                <textarea
+                  rows={2}
+                  value={draft.followUps}
+                  onChange={(e) => patchDraft({ followUps: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="drawer-footer">
+              <div className="drawer-actions">
+                <button type="button" className="hub-primary-btn" onClick={save}>
+                  Salvar
+                </button>
                 <button
                   type="button"
-                  className="hub-ghost-btn"
-                  onClick={deleteOpen}
+                  className="hub-secondary-btn"
+                  onClick={tryClose}
                 >
-                  Excluir
+                  Cancelar
                 </button>
-              ) : null}
-            </div>
-            <div className="field">
-              <label>Pessoa</label>
-              <input
-                value={draft.pessoa}
-                onChange={(e) => patchDraft({ pessoa: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Data</label>
-              <input
-                type="date"
-                value={draft.data}
-                onChange={(e) => patchDraft({ data: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Pauta</label>
-              <textarea
-                value={draft.pauta}
-                onChange={(e) => patchDraft({ pauta: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Combinados</label>
-              <textarea
-                value={draft.combinados}
-                onChange={(e) => patchDraft({ combinados: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Follow-ups</label>
-              <textarea
-                value={draft.followUps}
-                onChange={(e) => patchDraft({ followUps: e.target.value })}
-              />
+                {!isNew ? (
+                  <button
+                    type="button"
+                    className="hub-ghost-btn"
+                    onClick={deleteOpen}
+                  >
+                    Excluir
+                  </button>
+                ) : null}
+              </div>
             </div>
           </aside>
         </>

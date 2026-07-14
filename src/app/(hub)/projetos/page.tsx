@@ -50,7 +50,7 @@ export default function ProjetosPage() {
       <header className="hub-page-head">
         <div>
           <h1>Projetos</h1>
-          <p>Board visual — use @Nome nos updates para mencionar pessoas.</p>
+          <p>Arraste cards entre colunas; edite no drawer e salve no rodapé.</p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>

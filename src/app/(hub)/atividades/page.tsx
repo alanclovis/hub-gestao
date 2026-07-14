@@ -164,27 +164,17 @@ export default function AtividadesPage() {
       <header className="hub-page-head">
         <div>
           <h1>Atividades</h1>
-          <p>
-            Preencha e clique em Salvar. Vincule a um projeto para espelhar como
-            update.
-          </p>
+          <p>Registre o que fez e vincule a um projeto se quiser espelhar como update.</p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>
 
       <div className="list-toolbar">
         <input
+          className="list-filter"
           placeholder="Filtrar atividades…"
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: 200,
-            border: "1px solid var(--line)",
-            borderRadius: 10,
-            padding: "0.55rem 0.75rem",
-            background: "#fff",
-          }}
         />
         <button type="button" className="hub-primary-btn" onClick={create}>
           + Nova atividade
@@ -225,86 +215,99 @@ export default function AtividadesPage() {
                 Fechar
               </button>
             </div>
-            <div className="drawer-actions">
-              <button type="button" className="hub-primary-btn" onClick={save}>
-                Salvar
-              </button>
-              <button type="button" className="hub-secondary-btn" onClick={tryClose}>
-                Cancelar
-              </button>
-              {!isNew ? (
-                <button
-                  type="button"
-                  className="hub-ghost-btn"
-                  onClick={deleteOpen}
+            <div className="drawer-scroll">
+              <div className="field">
+                <label>Data</label>
+                <input
+                  type="date"
+                  value={draft.date}
+                  onChange={(e) => patchDraft({ date: e.target.value })}
+                />
+              </div>
+              <MentionInput
+                label="O que fiz"
+                value={draft.titulo}
+                people={people}
+                multiline
+                rows={2}
+                onChange={(v) => patchDraft({ titulo: v })}
+              />
+              <div className="field">
+                <label>Projeto (opcional)</label>
+                <select
+                  value={draft.projetoId ?? ""}
+                  onChange={(e) =>
+                    patchDraft({
+                      projetoId: e.target.value || undefined,
+                    })
+                  }
                 >
-                  Excluir
-                </button>
+                  <option value="">Sem projeto (avulsa)</option>
+                  {(projetos ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.titulo || "Sem título"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field-group">
+                <p className="field-group-title">Detalhe</p>
+                <MentionInput
+                  label="Decisão / mudança"
+                  value={draft.decisao ?? ""}
+                  people={people}
+                  onChange={(v) => patchDraft({ decisao: v })}
+                />
+                <MentionInput
+                  label="Evidência"
+                  value={draft.evidencia ?? ""}
+                  people={people}
+                  onChange={(v) => patchDraft({ evidencia: v })}
+                />
+                <MentionInput
+                  label="Resultado parcial"
+                  value={draft.resultado ?? ""}
+                  people={people}
+                  onChange={(v) => patchDraft({ resultado: v })}
+                />
+              </div>
+              <MentionInput
+                label="Notas"
+                value={draft.notas ?? ""}
+                people={people}
+                multiline
+                rows={2}
+                onChange={(v) => patchDraft({ notas: v })}
+              />
+              {draft.projetoId ? (
+                <p className="empty-hint">
+                  Ao salvar, esta atividade entra como update no projeto.
+                </p>
               ) : null}
             </div>
-            <div className="field">
-              <label>Data</label>
-              <input
-                type="date"
-                value={draft.date}
-                onChange={(e) => patchDraft({ date: e.target.value })}
-              />
+            <div className="drawer-footer">
+              <div className="drawer-actions">
+                <button type="button" className="hub-primary-btn" onClick={save}>
+                  Salvar
+                </button>
+                <button
+                  type="button"
+                  className="hub-secondary-btn"
+                  onClick={tryClose}
+                >
+                  Cancelar
+                </button>
+                {!isNew ? (
+                  <button
+                    type="button"
+                    className="hub-ghost-btn"
+                    onClick={deleteOpen}
+                  >
+                    Excluir
+                  </button>
+                ) : null}
+              </div>
             </div>
-            <MentionInput
-              label="O que fiz"
-              value={draft.titulo}
-              people={people}
-              multiline
-              onChange={(v) => patchDraft({ titulo: v })}
-            />
-            <div className="field">
-              <label>Projeto (opcional)</label>
-              <select
-                value={draft.projetoId ?? ""}
-                onChange={(e) =>
-                  patchDraft({
-                    projetoId: e.target.value || undefined,
-                  })
-                }
-              >
-                <option value="">Sem projeto (avulsa)</option>
-                {(projetos ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.titulo || "Sem título"}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <MentionInput
-              label="Decisão / mudança"
-              value={draft.decisao ?? ""}
-              people={people}
-              onChange={(v) => patchDraft({ decisao: v })}
-            />
-            <MentionInput
-              label="Evidência"
-              value={draft.evidencia ?? ""}
-              people={people}
-              onChange={(v) => patchDraft({ evidencia: v })}
-            />
-            <MentionInput
-              label="Resultado parcial"
-              value={draft.resultado ?? ""}
-              people={people}
-              onChange={(v) => patchDraft({ resultado: v })}
-            />
-            <MentionInput
-              label="Notas"
-              value={draft.notas ?? ""}
-              people={people}
-              multiline
-              onChange={(v) => patchDraft({ notas: v })}
-            />
-            {draft.projetoId ? (
-              <p className="empty-hint">
-                Ao salvar, esta atividade entra como update no projeto.
-              </p>
-            ) : null}
           </aside>
         </>
       ) : null}

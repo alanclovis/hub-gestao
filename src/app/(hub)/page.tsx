@@ -24,7 +24,7 @@ export default function HomePage() {
       <header className="hub-page-head">
         <div>
           <h1>Hoje</h1>
-          <p>Insights do que você fez — dentro e fora dos projetos.</p>
+          <p>O que avançou na semana ou no mês.</p>
         </div>
         <div className="hub-page-actions">
           <div className="period-toggle" role="group" aria-label="Período">

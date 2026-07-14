@@ -94,23 +94,18 @@ export default function PendenciasPage() {
       <header className="hub-page-head">
         <div>
           <h1>Pendências</h1>
-          <p>Preencha e clique em Salvar.</p>
+          <p>O que ainda precisa fechar.</p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>
 
       <div className="list-toolbar">
         <select
+          className="list-filter list-filter-sm"
           value={filtroStatus}
           onChange={(e) =>
             setFiltroStatus(e.target.value as "todas" | PendenciaStatus)
           }
-          style={{
-            border: "1px solid var(--line)",
-            borderRadius: 10,
-            padding: "0.55rem 0.75rem",
-            background: "#fff",
-          }}
         >
           <option value="aberta">Abertas</option>
           <option value="feita">Feitas</option>
@@ -158,78 +153,87 @@ export default function PendenciasPage() {
                 Fechar
               </button>
             </div>
-            <div className="drawer-actions">
-              <button type="button" className="hub-primary-btn" onClick={save}>
-                Salvar
-              </button>
-              <button type="button" className="hub-secondary-btn" onClick={tryClose}>
-                Cancelar
-              </button>
-              {!isNew ? (
-                <button
-                  type="button"
-                  className="hub-ghost-btn"
-                  onClick={deleteOpen}
-                >
-                  Excluir
-                </button>
-              ) : null}
-            </div>
-            <div className="field">
-              <label>Título</label>
-              <input
-                value={draft.titulo}
-                onChange={(e) => patchDraft({ titulo: e.target.value })}
-              />
-            </div>
-            <div className="field-row">
+            <div className="drawer-scroll">
               <div className="field">
-                <label>Status</label>
+                <label>Título</label>
+                <input
+                  value={draft.titulo}
+                  onChange={(e) => patchDraft({ titulo: e.target.value })}
+                />
+              </div>
+              <div className="field-row">
+                <div className="field">
+                  <label>Status</label>
+                  <select
+                    value={draft.status}
+                    onChange={(e) =>
+                      patchDraft({
+                        status: e.target.value as PendenciaStatus,
+                      })
+                    }
+                  >
+                    <option value="aberta">Aberta</option>
+                    <option value="feita">Feita</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Prazo</label>
+                  <input
+                    type="date"
+                    value={draft.prazo ?? ""}
+                    onChange={(e) => patchDraft({ prazo: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="field">
+                <label>Notas</label>
+                <textarea
+                  rows={3}
+                  value={draft.notas}
+                  onChange={(e) => patchDraft({ notas: e.target.value })}
+                />
+              </div>
+              <div className="field">
+                <label>Projeto (opcional)</label>
                 <select
-                  value={draft.status}
+                  value={draft.projetoId ?? ""}
                   onChange={(e) =>
                     patchDraft({
-                      status: e.target.value as PendenciaStatus,
+                      projetoId: e.target.value || undefined,
                     })
                   }
                 >
-                  <option value="aberta">Aberta</option>
-                  <option value="feita">Feita</option>
+                  <option value="">Sem projeto</option>
+                  {(projetos ?? []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.titulo || "Sem título"}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <div className="field">
-                <label>Prazo</label>
-                <input
-                  type="date"
-                  value={draft.prazo ?? ""}
-                  onChange={(e) => patchDraft({ prazo: e.target.value })}
-                />
+            </div>
+            <div className="drawer-footer">
+              <div className="drawer-actions">
+                <button type="button" className="hub-primary-btn" onClick={save}>
+                  Salvar
+                </button>
+                <button
+                  type="button"
+                  className="hub-secondary-btn"
+                  onClick={tryClose}
+                >
+                  Cancelar
+                </button>
+                {!isNew ? (
+                  <button
+                    type="button"
+                    className="hub-ghost-btn"
+                    onClick={deleteOpen}
+                  >
+                    Excluir
+                  </button>
+                ) : null}
               </div>
-            </div>
-            <div className="field">
-              <label>Notas</label>
-              <textarea
-                value={draft.notas}
-                onChange={(e) => patchDraft({ notas: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Projeto (opcional)</label>
-              <select
-                value={draft.projetoId ?? ""}
-                onChange={(e) =>
-                  patchDraft({
-                    projetoId: e.target.value || undefined,
-                  })
-                }
-              >
-                <option value="">Sem projeto</option>
-                {(projetos ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.titulo || "Sem título"}
-                  </option>
-                ))}
-              </select>
             </div>
           </aside>
         </>

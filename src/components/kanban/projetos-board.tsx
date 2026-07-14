@@ -262,223 +262,239 @@ function ProjectDrawer({
           </button>
         </div>
 
-        <div className="drawer-actions">
-          <button type="button" className="hub-primary-btn" onClick={save}>
-            Salvar
-          </button>
-          <button type="button" className="hub-secondary-btn" onClick={tryClose}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="hub-secondary-btn"
-            onClick={() => {
-              const text = buildProjetoReport(local);
-              setReportText(text);
-              setCopied(false);
-              setReportOpen(true);
-            }}
-          >
-            Gerar relatório
-          </button>
-        </div>
-
-        <div className="field">
-          <label>Título</label>
-          <input
-            value={local.titulo}
-            onChange={(e) => patchLocal({ titulo: e.target.value })}
-          />
-        </div>
-        <MentionInput
-          label="Descrição e contexto"
-          value={local.descricao}
-          people={people}
-          multiline
-          rows={3}
-          onChange={(v) => patchLocal({ descricao: v })}
-        />
-        <div className="field-row">
+        <div className="drawer-scroll">
           <div className="field">
-            <label>Status</label>
-            <select
-              value={local.status}
-              onChange={(e) =>
-                patchLocal({ status: e.target.value as ProjetoStatus })
-              }
-            >
-              {STATUS_COLUMNS.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>Papel</label>
-            <select
-              value={local.papel}
-              onChange={(e) =>
-                patchLocal({ papel: e.target.value as Projeto["papel"] })
-              }
-            >
-              {PAPEIS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="field">
-          <label>KR relacionado</label>
-          <input
-            value={local.kr}
-            onChange={(e) => patchLocal({ kr: e.target.value })}
-            placeholder="KR 1.1 — Data Labeling"
-          />
-        </div>
-        <div className="field-row">
-          <div className="field">
-            <label>Período</label>
+            <label>Título</label>
             <input
-              value={local.periodo}
-              onChange={(e) => patchLocal({ periodo: e.target.value })}
-              placeholder="Abr/26 —"
-            />
-          </div>
-          <div className="field">
-            <label>Links (um por linha)</label>
-            <textarea
-              value={local.links.join("\n")}
-              onChange={(e) =>
-                patchLocal({
-                  links: e.target.value
-                    .split("\n")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                })
-              }
-            />
-          </div>
-        </div>
-        <MentionInput
-          label="Impacto / resultado"
-          value={local.impacto}
-          people={people}
-          multiline
-          rows={2}
-          onChange={(v) => patchLocal({ impacto: v })}
-        />
-
-        <div className="update-feed">
-          <h3>{editingId ? "Editando update" : "Novo update"}</h3>
-          <p className="empty-hint" style={{ marginTop: 0 }}>
-            Inclua updates abaixo e depois clique em Salvar no topo.
-          </p>
-          <div className="field">
-            <label>Data</label>
-            <input
-              type="date"
-              value={updateDraft.date}
-              onChange={(e) =>
-                setUpdateDraft({ ...updateDraft, date: e.target.value })
-              }
+              value={local.titulo}
+              onChange={(e) => patchLocal({ titulo: e.target.value })}
             />
           </div>
           <MentionInput
-            label="O que fiz"
-            value={updateDraft.oQueFiz}
+            label="Descrição e contexto"
+            value={local.descricao}
             people={people}
             multiline
             rows={2}
-            onChange={(v) => setUpdateDraft({ ...updateDraft, oQueFiz: v })}
+            onChange={(v) => patchLocal({ descricao: v })}
           />
+          <div className="field-row">
+            <div className="field">
+              <label>Status</label>
+              <select
+                value={local.status}
+                onChange={(e) =>
+                  patchLocal({ status: e.target.value as ProjetoStatus })
+                }
+              >
+                {STATUS_COLUMNS.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Papel</label>
+              <select
+                value={local.papel}
+                onChange={(e) =>
+                  patchLocal({ papel: e.target.value as Projeto["papel"] })
+                }
+              >
+                {PAPEIS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="field">
+            <label>KR relacionado</label>
+            <input
+              value={local.kr}
+              onChange={(e) => patchLocal({ kr: e.target.value })}
+              placeholder="KR 1.1 — Data Labeling"
+            />
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label>Período</label>
+              <input
+                value={local.periodo}
+                onChange={(e) => patchLocal({ periodo: e.target.value })}
+                placeholder="Abr/26 —"
+              />
+            </div>
+            <div className="field">
+              <label>Links (um por linha)</label>
+              <textarea
+                rows={2}
+                value={local.links.join("\n")}
+                onChange={(e) =>
+                  patchLocal({
+                    links: e.target.value
+                      .split("\n")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  })
+                }
+              />
+            </div>
+          </div>
           <MentionInput
-            label="Decisão / mudança"
-            value={updateDraft.decisao}
+            label="Impacto / resultado"
+            value={local.impacto}
             people={people}
-            onChange={(v) => setUpdateDraft({ ...updateDraft, decisao: v })}
+            multiline
+            rows={2}
+            onChange={(v) => patchLocal({ impacto: v })}
           />
-          <MentionInput
-            label="Evidência"
-            value={updateDraft.evidencia}
-            people={people}
-            onChange={(v) => setUpdateDraft({ ...updateDraft, evidencia: v })}
-          />
-          <MentionInput
-            label="Resultado parcial"
-            value={updateDraft.resultado}
-            people={people}
-            onChange={(v) => setUpdateDraft({ ...updateDraft, resultado: v })}
-          />
-          <div className="drawer-actions drawer-actions-footer">
-            <button
-              type="button"
-              className="hub-primary-btn"
-              onClick={saveUpdateToLocal}
-            >
-              {editingId ? "Aplicar update" : "Incluir update"}
-            </button>
-            {editingId ? (
-              <>
-                <button
-                  type="button"
-                  className="hub-secondary-btn"
-                  onClick={clearUpdateForm}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="hub-ghost-btn"
-                  onClick={deleteUpdateFromLocal}
-                >
-                  Excluir update
-                </button>
-              </>
-            ) : null}
+
+          <div className="update-feed">
+            <h3>{editingId ? "Editando update" : "Novo update"}</h3>
+            <p className="empty-hint" style={{ marginTop: 0 }}>
+              Inclua updates e clique em Salvar no rodapé para gravar.
+            </p>
+            <div className="field">
+              <label>Data</label>
+              <input
+                type="date"
+                value={updateDraft.date}
+                onChange={(e) =>
+                  setUpdateDraft({ ...updateDraft, date: e.target.value })
+                }
+              />
+            </div>
+            <MentionInput
+              label="O que fiz"
+              value={updateDraft.oQueFiz}
+              people={people}
+              multiline
+              rows={2}
+              onChange={(v) => setUpdateDraft({ ...updateDraft, oQueFiz: v })}
+            />
+            <div className="field-group">
+              <p className="field-group-title">Detalhe do update</p>
+              <MentionInput
+                label="Decisão / mudança"
+                value={updateDraft.decisao}
+                people={people}
+                onChange={(v) => setUpdateDraft({ ...updateDraft, decisao: v })}
+              />
+              <MentionInput
+                label="Evidência"
+                value={updateDraft.evidencia}
+                people={people}
+                onChange={(v) =>
+                  setUpdateDraft({ ...updateDraft, evidencia: v })
+                }
+              />
+              <MentionInput
+                label="Resultado parcial"
+                value={updateDraft.resultado}
+                people={people}
+                onChange={(v) =>
+                  setUpdateDraft({ ...updateDraft, resultado: v })
+                }
+              />
+            </div>
+            <div className="drawer-actions drawer-actions-inline">
+              <button
+                type="button"
+                className="hub-primary-btn"
+                onClick={saveUpdateToLocal}
+              >
+                {editingId ? "Aplicar update" : "Incluir update"}
+              </button>
+              {editingId ? (
+                <>
+                  <button
+                    type="button"
+                    className="hub-secondary-btn"
+                    onClick={clearUpdateForm}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="hub-ghost-btn"
+                    onClick={deleteUpdateFromLocal}
+                  >
+                    Excluir update
+                  </button>
+                </>
+              ) : null}
+            </div>
+
+            {local.updates.map((u) => (
+              <button
+                type="button"
+                key={u.id}
+                className={`update-item update-item-btn${editingId === u.id ? " is-editing" : ""}`}
+                onClick={() => startEdit(u)}
+              >
+                <div className="date">
+                  {u.date}
+                  <span className="muted"> · clique para editar</span>
+                </div>
+                <div>
+                  <strong>O que fiz:</strong> {u.oQueFiz}
+                </div>
+                {u.decisao ? (
+                  <div>
+                    <strong>Decisão:</strong> {u.decisao}
+                  </div>
+                ) : null}
+                {u.evidencia ? (
+                  <div>
+                    <strong>Evidência:</strong> {u.evidencia}
+                  </div>
+                ) : null}
+                {u.resultado ? (
+                  <div>
+                    <strong>Resultado:</strong> {u.resultado}
+                  </div>
+                ) : null}
+              </button>
+            ))}
           </div>
 
-          {local.updates.map((u) => (
-            <button
-              type="button"
-              key={u.id}
-              className={`update-item update-item-btn${editingId === u.id ? " is-editing" : ""}`}
-              onClick={() => startEdit(u)}
-            >
-              <div className="date">
-                {u.date}
-                <span className="muted"> · clique para editar</span>
-              </div>
-              <div>
-                <strong>O que fiz:</strong> {u.oQueFiz}
-              </div>
-              {u.decisao ? (
-                <div>
-                  <strong>Decisão:</strong> {u.decisao}
-                </div>
-              ) : null}
-              {u.evidencia ? (
-                <div>
-                  <strong>Evidência:</strong> {u.evidencia}
-                </div>
-              ) : null}
-              {u.resultado ? (
-                <div>
-                  <strong>Resultado:</strong> {u.resultado}
-                </div>
-              ) : null}
-            </button>
-          ))}
+          {!isNew ? (
+            <div style={{ marginTop: "1rem" }}>
+              <button type="button" className="hub-ghost-btn" onClick={onDelete}>
+                Excluir projeto
+              </button>
+            </div>
+          ) : null}
         </div>
 
-        <div style={{ marginTop: "1.5rem" }}>
-          {!isNew ? (
-            <button type="button" className="hub-ghost-btn" onClick={onDelete}>
-              Excluir projeto
+        <div className="drawer-footer">
+          <div className="drawer-actions">
+            <button type="button" className="hub-primary-btn" onClick={save}>
+              Salvar
             </button>
-          ) : null}
+            <button
+              type="button"
+              className="hub-secondary-btn"
+              onClick={tryClose}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="hub-secondary-btn"
+              onClick={() => {
+                const text = buildProjetoReport(local);
+                setReportText(text);
+                setCopied(false);
+                setReportOpen(true);
+              }}
+            >
+              Gerar relatório
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -507,7 +523,7 @@ function ProjectDrawer({
               Markdown gerado a partir do card e dos updates — copie ou baixe
               para apresentar / pedir revisão à IA.
             </p>
-            <div className="drawer-actions drawer-actions-footer">
+            <div className="drawer-actions drawer-actions-inline">
               <button
                 type="button"
                 className="hub-primary-btn"
@@ -639,8 +655,8 @@ export function ProjetosBoard({
   return (
     <>
       <div className="list-toolbar">
-        <p className="empty-hint" style={{ margin: 0 }}>
-          Arraste os cards entre colunas. Edite e clique em Salvar no drawer.
+        <p className="empty-hint" style={{ margin: 0, flex: 1 }}>
+          Arraste cards entre colunas.
         </p>
         <button type="button" className="hub-primary-btn" onClick={createProjeto}>
           + Novo projeto

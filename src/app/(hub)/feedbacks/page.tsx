@@ -146,24 +146,16 @@ export default function FeedbacksPage() {
       <header className="hub-page-head">
         <div>
           <h1>Feedbacks</h1>
-          <p>
-            Filtre por pessoa. Preencha e clique em Salvar.
-          </p>
+          <p>Filtre por pessoa ou tema para achar o histórico.</p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>
 
       <div className="list-toolbar">
         <select
+          className="list-filter list-filter-sm"
           value={pessoa}
           onChange={(e) => setPessoa(e.target.value)}
-          style={{
-            border: "1px solid var(--line)",
-            borderRadius: 10,
-            padding: "0.55rem 0.75rem",
-            background: "#fff",
-            minWidth: 180,
-          }}
         >
           <option value="">Todas as pessoas</option>
           {people.map((p) => (
@@ -173,17 +165,10 @@ export default function FeedbacksPage() {
           ))}
         </select>
         <input
+          className="list-filter"
           placeholder="Filtrar por tema ou contexto…"
           value={filtroTexto}
           onChange={(e) => setFiltroTexto(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: 180,
-            border: "1px solid var(--line)",
-            borderRadius: 10,
-            padding: "0.55rem 0.75rem",
-            background: "#fff",
-          }}
         />
         <button type="button" className="hub-primary-btn" onClick={create}>
           + Novo feedback
@@ -249,52 +234,60 @@ export default function FeedbacksPage() {
                 Fechar
               </button>
             </div>
-            <div className="drawer-actions">
-              <button type="button" className="hub-primary-btn" onClick={save}>
-                Salvar
-              </button>
-              <button type="button" className="hub-secondary-btn" onClick={tryClose}>
-                Cancelar
-              </button>
-              {!isNew ? (
-                <button
-                  type="button"
-                  className="hub-ghost-btn"
-                  onClick={deleteOpen}
-                >
-                  Excluir
-                </button>
-              ) : null}
-            </div>
-            <MentionInput
-              label="De quem"
-              value={draft.deQuem}
-              people={people}
-              placeholder="Maria ou @Maria"
-              onChange={(v) => patchDraft({ deQuem: v })}
-            />
-            <div className="field">
-              <label>Data</label>
-              <input
-                type="date"
-                value={draft.data}
-                onChange={(e) => patchDraft({ data: e.target.value })}
+            <div className="drawer-scroll">
+              <MentionInput
+                label="De quem"
+                value={draft.deQuem}
+                people={people}
+                placeholder="Maria ou @Maria"
+                onChange={(v) => patchDraft({ deQuem: v })}
+              />
+              <div className="field">
+                <label>Data</label>
+                <input
+                  type="date"
+                  value={draft.data}
+                  onChange={(e) => patchDraft({ data: e.target.value })}
+                />
+              </div>
+              <MentionInput
+                label="Tema"
+                value={draft.tema}
+                people={people}
+                onChange={(v) => patchDraft({ tema: v })}
+              />
+              <MentionInput
+                label="Citação / contexto"
+                value={draft.contexto}
+                people={people}
+                multiline
+                rows={3}
+                onChange={(v) => patchDraft({ contexto: v })}
               />
             </div>
-            <MentionInput
-              label="Tema"
-              value={draft.tema}
-              people={people}
-              onChange={(v) => patchDraft({ tema: v })}
-            />
-            <MentionInput
-              label="Citação / contexto"
-              value={draft.contexto}
-              people={people}
-              multiline
-              rows={4}
-              onChange={(v) => patchDraft({ contexto: v })}
-            />
+            <div className="drawer-footer">
+              <div className="drawer-actions">
+                <button type="button" className="hub-primary-btn" onClick={save}>
+                  Salvar
+                </button>
+                <button
+                  type="button"
+                  className="hub-secondary-btn"
+                  onClick={tryClose}
+                >
+                  Cancelar
+                </button>
+                {!isNew ? (
+                  <button
+                    type="button"
+                    className="hub-ghost-btn"
+                    onClick={deleteOpen}
+                  >
+                    Excluir
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </aside>
         </>
       ) : null}
