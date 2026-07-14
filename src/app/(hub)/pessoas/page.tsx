@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { AiFeedbackDrawer } from "@/components/ai-feedback-drawer";
 import { MentionText } from "@/components/mention-text";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
@@ -21,6 +22,7 @@ export default function PessoasPage() {
   const { data: oneones } = useCollection("oneones");
   const [pessoa, setPessoa] = useState("");
   const [busca, setBusca] = useState("");
+  const [aiOpen, setAiOpen] = useState(false);
 
   const people = useMemo(
     () =>
@@ -51,13 +53,28 @@ export default function PessoasPage() {
     [pessoa, feedbacks, atividades, projetos],
   );
 
+  const openPrompt = () => {
+    if (!pessoa) {
+      window.alert("Escolha uma pessoa primeiro.");
+      return;
+    }
+    if (personHits.length === 0) {
+      window.alert(`Nenhuma menção encontrada para @${pessoa}.`);
+      return;
+    }
+    setAiOpen(true);
+  };
+
   return (
     <>
       <header className="hub-page-head">
         <div>
           <p className="hub-kicker">Menções</p>
           <h1>Pessoas</h1>
-          <p>Busque quem você mencionou com @ em atividades e projetos.</p>
+          <p>
+            Busque quem você mencionou e monte um prompt de feedback para o
+            Claude.
+          </p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>
@@ -118,24 +135,33 @@ export default function PessoasPage() {
             style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "baseline",
+              alignItems: "center",
               gap: "1rem",
+              flexWrap: "wrap",
               marginBottom: "0.75rem",
             }}
           >
             <h2 style={{ margin: 0 }}>Menções de @{pessoa}</h2>
-            <button
-              type="button"
-              className="hub-ghost-btn"
-              onClick={() => setPessoa("")}
-            >
-              Limpar
-            </button>
+            <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="hub-primary-btn"
+                onClick={openPrompt}
+                disabled={personHits.length === 0}
+              >
+                Gerar prompt
+              </button>
+              <button
+                type="button"
+                className="hub-ghost-btn"
+                onClick={() => setPessoa("")}
+              >
+                Limpar
+              </button>
+            </div>
           </div>
           {personHits.length === 0 ? (
-            <p className="empty-hint">
-              Nada encontrado com @{pessoa}.
-            </p>
+            <p className="empty-hint">Nada encontrado com @{pessoa}.</p>
           ) : (
             <ul className="overview-list">
               {personHits.map((h) => (
@@ -155,6 +181,13 @@ export default function PessoasPage() {
           )}
         </section>
       )}
+
+      <AiFeedbackDrawer
+        open={aiOpen}
+        pessoa={pessoa}
+        hits={personHits}
+        onClose={() => setAiOpen(false)}
+      />
     </>
   );
 }

@@ -1,52 +1,44 @@
-import type { Atividade } from "./types";
+import type { PersonHit } from "./mentions";
 
-export type FeedbackContextItem = {
-  date: string;
-  titulo: string;
-  notas?: string;
-  projetoTitulo?: string;
+const kindLabel: Record<PersonHit["kind"], string> = {
+  feedback: "Feedback",
+  atividade: "Atividade",
+  projeto: "Projeto",
+  update: "Update",
 };
 
-export function toFeedbackContext(
-  items: Atividade[],
-  projetoTitulo: (id?: string) => string | undefined,
-): FeedbackContextItem[] {
-  return items.map((a) => ({
-    date: a.date,
-    titulo: a.titulo || "Sem título",
-    notas: a.notas?.trim() || undefined,
-    projetoTitulo: a.projetoId ? projetoTitulo(a.projetoId) : undefined,
-  }));
-}
-
-/** Monta um prompt pronto para colar no Claude (chat). */
-export function buildClaudeFeedbackPrompt(
-  items: FeedbackContextItem[],
+/** Monta um prompt pronto para colar no Claude, sobre uma pessoa. */
+export function buildClaudePersonPrompt(
+  pessoa: string,
+  hits: PersonHit[],
 ): string {
-  if (!items.length) {
-    throw new Error("Selecione ao menos uma atividade.");
+  const name = pessoa.trim().replace(/^@+/, "");
+  if (!name) {
+    throw new Error("Escolha uma pessoa.");
+  }
+  if (!hits.length) {
+    throw new Error(`Nenhuma menção encontrada para @${name}.`);
   }
 
-  const blocks = items
-    .map((a, i) => {
+  const blocks = hits
+    .map((h, i) => {
       const lines = [
-        `${i + 1}. [${a.date}] ${a.titulo}`,
-        a.projetoTitulo ? `   Projeto: ${a.projetoTitulo}` : null,
-        a.notas ? `   Notas: ${a.notas}` : null,
+        `${i + 1}. [${h.data}] (${kindLabel[h.kind]}) ${h.titulo}`,
+        h.detalhe ? `   Contexto: ${h.detalhe}` : null,
       ].filter(Boolean);
       return lines.join("\n");
     })
     .join("\n\n");
 
-  return `Com base nas atividades abaixo, escreva um feedback resumido em português do Brasil.
+  return `Com base nos registros abaixo sobre @${name}, escreva um feedback resumido em português do Brasil.
 
 Regras:
 - 3 a 6 frases objetivas
-- Tom profissional, claro e útil
+- Tom profissional, claro e útil (pode ser para dar feedback a @${name} ou sobre o trabalho com essa pessoa)
 - Use apenas o que está escrito; não invente fatos, números ou pessoas
-- Se houver nomes com @, preserve o contexto
+- Preserve menções com @ quando fizer sentido
 - Não use markdown nem títulos; só o parágrafo do feedback
 
-Atividades:
+Registros sobre @${name}:
 ${blocks}`;
 }

@@ -1,21 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  buildClaudeFeedbackPrompt,
-  toFeedbackContext,
-} from "@/lib/ai";
-import type { Atividade } from "@/lib/types";
+import { buildClaudePersonPrompt } from "@/lib/ai";
+import type { PersonHit } from "@/lib/mentions";
 
 export function AiFeedbackDrawer({
   open,
-  atividades,
-  projetoTitulo,
+  pessoa,
+  hits,
   onClose,
 }: {
   open: boolean;
-  atividades: Atividade[];
-  projetoTitulo: (id?: string) => string;
+  pessoa: string;
+  hits: PersonHit[];
   onClose: () => void;
 }) {
   const [text, setText] = useState("");
@@ -26,16 +23,13 @@ export function AiFeedbackDrawer({
     if (!open) return;
     setCopied(false);
     try {
-      const prompt = buildClaudeFeedbackPrompt(
-        toFeedbackContext(atividades, projetoTitulo),
-      );
-      setText(prompt);
+      setText(buildClaudePersonPrompt(pessoa, hits));
       setError(null);
     } catch (err) {
       setText("");
       setError(err instanceof Error ? err.message : "Falha ao montar o prompt");
     }
-  }, [open, atividades, projetoTitulo]);
+  }, [open, pessoa, hits]);
 
   if (!open) return null;
 
@@ -49,6 +43,8 @@ export function AiFeedbackDrawer({
     }
   };
 
+  const label = pessoa.replace(/^@+/, "");
+
   return (
     <>
       <div className="drawer-backdrop" onClick={onClose} />
@@ -56,7 +52,7 @@ export function AiFeedbackDrawer({
         <div className="drawer-head">
           <div>
             <p className="hub-kicker">Claude</p>
-            <h2>Prompt pronto</h2>
+            <h2>Prompt para @{label}</h2>
           </div>
           <button type="button" className="hub-ghost-btn" onClick={onClose}>
             Fechar
@@ -64,10 +60,8 @@ export function AiFeedbackDrawer({
         </div>
         <div className="drawer-scroll">
           <p className="empty-hint" style={{ marginBottom: "0.75rem" }}>
-            Copie e cole em claude.ai (ou no app). O texto já inclui as{" "}
-            {atividades.length} atividade
-            {atividades.length === 1 ? "" : "s"} selecionada
-            {atividades.length === 1 ? "" : "s"}.
+            Copie e cole em claude.ai. O texto já inclui {hits.length} registro
+            {hits.length === 1 ? "" : "s"} sobre @{label}.
           </p>
           {error ? (
             <p className="empty-hint" style={{ color: "var(--danger)" }}>

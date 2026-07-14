@@ -1,6 +1,5 @@
 "use client";
 
-import { AiFeedbackDrawer } from "@/components/ai-feedback-drawer";
 import { MentionInput } from "@/components/mention-input";
 import { MentionText } from "@/components/mention-text";
 import { SaveBadge } from "@/components/save-badge";
@@ -11,7 +10,7 @@ import {
 } from "@/lib/atividade-sync";
 import { collectPeople } from "@/lib/mentions";
 import type { Atividade } from "@/lib/types";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 
 function emptyAtividade(): Atividade {
@@ -49,8 +48,6 @@ export default function AtividadesPage() {
   const [isNew, setIsNew] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [filtro, setFiltro] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(() => new Set());
-  const [aiOpen, setAiOpen] = useState(false);
 
   const people = useMemo(
     () =>
@@ -88,34 +85,8 @@ export default function AtividadesPage() {
     );
   }, [atividades, filtro]);
 
-  const projetoTitulo = useCallback(
-    (id?: string) => projetos?.find((p) => p.id === id)?.titulo ?? "Avulso",
-    [projetos],
-  );
-
-  const selectedAtividades = useMemo(
-    () => (atividades ?? []).filter((a) => selected.has(a.id)),
-    [atividades, selected],
-  );
-
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const clearSelection = () => setSelected(new Set());
-
-  const openAiFeedback = () => {
-    if (selected.size === 0) {
-      window.alert("Selecione ao menos uma atividade.");
-      return;
-    }
-    setAiOpen(true);
-  };
+  const projetoTitulo = (id?: string) =>
+    projetos?.find((p) => p.id === id)?.titulo ?? "Avulso";
 
   const closeDrawer = () => {
     setDraft(null);
@@ -184,11 +155,6 @@ export default function AtividadesPage() {
       setProjetos((prev) => removeAtividadeMirror(prev, existing));
     }
     setAtividades((prev) => prev.filter((a) => a.id !== draft.id));
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.delete(draft.id);
-      return next;
-    });
     closeDrawer();
   };
 
@@ -204,8 +170,8 @@ export default function AtividadesPage() {
           <p className="hub-kicker">Dia a dia</p>
           <h1>Atividades</h1>
           <p>
-            Registre o que fez, selecione itens e monte um prompt para colar no
-            Claude.
+            Registre o que fez e vincule a um projeto se quiser espelhar como
+            update.
           </p>
         </div>
         <SaveBadge status={status} error={error} />
@@ -223,65 +189,27 @@ export default function AtividadesPage() {
         </button>
       </div>
 
-      {selected.size > 0 ? (
-        <div className="ai-select-bar" role="status">
-          <span>
-            {selected.size} selecionada{selected.size === 1 ? "" : "s"}
-          </span>
-          <div className="ai-select-actions">
-            <button
-              type="button"
-              className="hub-primary-btn"
-              onClick={openAiFeedback}
-            >
-              Gerar prompt
-            </button>
-            <button
-              type="button"
-              className="hub-ghost-btn"
-              onClick={clearSelection}
-            >
-              Limpar
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       {atividades === null || projetos === null ? (
         <p className="empty-hint">Carregando…</p>
       ) : items.length === 0 ? (
         <p className="empty-hint">Nenhuma atividade ainda.</p>
       ) : (
         <div className="list-stack">
-          {items.map((a) => {
-            const checked = selected.has(a.id);
-            return (
-              <div
-                key={a.id}
-                className={`list-item list-item-selectable${checked ? " is-selected" : ""}`}
-              >
-                <label className="list-item-check">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleSelect(a.id)}
-                    aria-label={`Selecionar ${a.titulo || "atividade"}`}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="list-item-main"
-                  onClick={() => openExisting(a)}
-                >
-                  <MentionText as="h3" text={a.titulo || "Sem título"} />
-                  <p className="meta">
-                    {a.date} · {projetoTitulo(a.projetoId)}
-                    {a.linkedUpdateId ? " · no projeto" : ""}
-                  </p>
-                </button>
-              </div>
-            );
-          })}
+          {items.map((a) => (
+            <button
+              type="button"
+              key={a.id}
+              className="list-item"
+              onClick={() => openExisting(a)}
+              style={{ textAlign: "left", width: "100%" }}
+            >
+              <MentionText as="h3" text={a.titulo || "Sem título"} />
+              <p className="meta">
+                {a.date} · {projetoTitulo(a.projetoId)}
+                {a.linkedUpdateId ? " · no projeto" : ""}
+              </p>
+            </button>
+          ))}
         </div>
       )}
 
@@ -373,13 +301,6 @@ export default function AtividadesPage() {
           </aside>
         </>
       ) : null}
-
-      <AiFeedbackDrawer
-        open={aiOpen}
-        atividades={selectedAtividades}
-        projetoTitulo={projetoTitulo}
-        onClose={() => setAiOpen(false)}
-      />
     </>
   );
 }
