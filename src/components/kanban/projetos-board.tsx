@@ -24,6 +24,7 @@ import {
   downloadTextFile,
   reportFilename,
 } from "@/lib/report-projeto";
+import { MentionInput } from "@/components/mention-input";
 import {
   PAPEIS,
   STATUS_COLUMNS,
@@ -108,11 +109,13 @@ function ProjectDrawer({
   onClose,
   onDelete,
   onUpdateMutated,
+  people = [],
 }: {
   projeto: Projeto;
   onChange: (next: Projeto) => void;
   onClose: () => void;
   onDelete: () => void;
+  people?: string[];
   onUpdateMutated?: (payload: {
     action: "upsert" | "delete";
     update?: ProjetoUpdate;
@@ -201,13 +204,14 @@ function ProjectDrawer({
             onChange={(e) => patch({ titulo: e.target.value })}
           />
         </div>
-        <div className="field">
-          <label>Descrição e contexto</label>
-          <textarea
-            value={projeto.descricao}
-            onChange={(e) => patch({ descricao: e.target.value })}
-          />
-        </div>
+        <MentionInput
+          label="Descrição e contexto"
+          value={projeto.descricao}
+          people={people}
+          multiline
+          rows={3}
+          onChange={(v) => patch({ descricao: v })}
+        />
         <div className="field-row">
           <div className="field">
             <label>Status</label>
@@ -272,13 +276,14 @@ function ProjectDrawer({
             />
           </div>
         </div>
-        <div className="field">
-          <label>Impacto / resultado</label>
-          <textarea
-            value={projeto.impacto}
-            onChange={(e) => patch({ impacto: e.target.value })}
-          />
-        </div>
+        <MentionInput
+          label="Impacto / resultado"
+          value={projeto.impacto}
+          people={people}
+          multiline
+          rows={2}
+          onChange={(v) => patch({ impacto: v })}
+        />
 
         <div className="drawer-actions">
           <button
@@ -305,38 +310,32 @@ function ProjectDrawer({
               onChange={(e) => setDraft({ ...draft, date: e.target.value })}
             />
           </div>
-          <div className="field">
-            <label>O que fiz</label>
-            <textarea
-              value={draft.oQueFiz}
-              onChange={(e) => setDraft({ ...draft, oQueFiz: e.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label>Decisão / mudança</label>
-            <input
-              value={draft.decisao}
-              onChange={(e) => setDraft({ ...draft, decisao: e.target.value })}
-            />
-          </div>
-          <div className="field">
-            <label>Evidência</label>
-            <input
-              value={draft.evidencia}
-              onChange={(e) =>
-                setDraft({ ...draft, evidencia: e.target.value })
-              }
-            />
-          </div>
-          <div className="field">
-            <label>Resultado parcial</label>
-            <input
-              value={draft.resultado}
-              onChange={(e) =>
-                setDraft({ ...draft, resultado: e.target.value })
-              }
-            />
-          </div>
+          <MentionInput
+            label="O que fiz"
+            value={draft.oQueFiz}
+            people={people}
+            multiline
+            rows={2}
+            onChange={(v) => setDraft({ ...draft, oQueFiz: v })}
+          />
+          <MentionInput
+            label="Decisão / mudança"
+            value={draft.decisao}
+            people={people}
+            onChange={(v) => setDraft({ ...draft, decisao: v })}
+          />
+          <MentionInput
+            label="Evidência"
+            value={draft.evidencia}
+            people={people}
+            onChange={(v) => setDraft({ ...draft, evidencia: v })}
+          />
+          <MentionInput
+            label="Resultado parcial"
+            value={draft.resultado}
+            people={people}
+            onChange={(v) => setDraft({ ...draft, resultado: v })}
+          />
           <div className="drawer-actions">
             <button type="button" className="hub-primary-btn" onClick={saveUpdate}>
               {editingId ? "Salvar update" : "Adicionar update"}
@@ -464,9 +463,11 @@ export function ProjetosBoard({
   projetos,
   onChange,
   onUpdateMutated,
+  people = [],
 }: {
   projetos: Projeto[];
   onChange: (next: Projeto[]) => void;
+  people?: string[];
   onUpdateMutated?: (payload: {
     action: "upsert" | "delete";
     update?: ProjetoUpdate;
@@ -605,6 +606,7 @@ export function ProjetosBoard({
             setOpenId(null);
           }}
           onUpdateMutated={onUpdateMutated}
+          people={people}
         />
       ) : null}
     </>

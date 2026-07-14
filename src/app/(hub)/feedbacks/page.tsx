@@ -1,9 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
+import { MentionInput } from "@/components/mention-input";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
+import {
+  collectPeople,
+  findPersonHits,
+  isSamePerson,
+  textMentionsPerson,
+} from "@/lib/mentions";
 import type { Feedback } from "@/lib/types";
 
 function emptyFeedback(): Feedback {
@@ -19,27 +27,69 @@ function emptyFeedback(): Feedback {
   };
 }
 
+const kindLabel = {
+  feedback: "Feedback",
+  atividade: "Atividade",
+  projeto: "Projeto",
+  update: "Update",
+} as const;
+
 export default function FeedbacksPage() {
   const { data, setData, status, error } = useCollection("feedbacks");
+  const { data: atividades } = useCollection("atividades");
+  const { data: projetos } = useCollection("projetos");
   const [openId, setOpenId] = useState<string | null>(null);
-  const [filtro, setFiltro] = useState("");
+  const [filtroTexto, setFiltroTexto] = useState("");
+  const [pessoa, setPessoa] = useState("");
+
+  const people = useMemo(
+    () =>
+      collectPeople({
+        feedbacks: data,
+        atividades,
+        projetos,
+      }),
+    [data, atividades, projetos],
+  );
 
   const items = useMemo(() => {
     const list = [...(data ?? [])].sort((a, b) => b.data.localeCompare(a.data));
-    if (!filtro.trim()) return list;
-    const q = filtro.toLowerCase();
-    return list.filter(
-      (f) =>
+    return list.filter((f) => {
+      if (pessoa) {
+        const matchPerson =
+          isSamePerson(f.deQuem, pessoa) ||
+          textMentionsPerson(f.deQuem, pessoa) ||
+          textMentionsPerson(f.tema, pessoa) ||
+          textMentionsPerson(f.contexto, pessoa);
+        if (!matchPerson) return false;
+      }
+      if (!filtroTexto.trim()) return true;
+      const q = filtroTexto.toLowerCase();
+      return (
         f.deQuem.toLowerCase().includes(q) ||
         f.tema.toLowerCase().includes(q) ||
-        f.contexto.toLowerCase().includes(q),
-    );
-  }, [data, filtro]);
+        f.contexto.toLowerCase().includes(q)
+      );
+    });
+  }, [data, filtroTexto, pessoa]);
+
+  const personHits = useMemo(
+    () =>
+      pessoa
+        ? findPersonHits(pessoa, {
+            feedbacks: data,
+            atividades,
+            projetos,
+          })
+        : [],
+    [pessoa, data, atividades, projetos],
+  );
 
   const open = data?.find((f) => f.id === openId) ?? null;
 
   const create = () => {
     const novo = emptyFeedback();
+    if (pessoa) novo.deQuem = pessoa.startsWith("@") ? pessoa.slice(1) : pessoa;
     setData((prev) => [novo, ...prev]);
     setOpenId(novo.id);
   };
@@ -59,19 +109,39 @@ export default function FeedbacksPage() {
       <header className="hub-page-head">
         <div>
           <h1>Feedbacks</h1>
-          <p>O que você recebeu — de quem, quando e em que contexto.</p>
+          <p>
+            Filtre por pessoa para ver feedbacks e tudo que menciona @Nome.
+          </p>
         </div>
         <SaveBadge status={status} error={error} />
       </header>
 
       <div className="list-toolbar">
+        <select
+          value={pessoa}
+          onChange={(e) => setPessoa(e.target.value)}
+          style={{
+            border: "1px solid var(--line)",
+            borderRadius: 10,
+            padding: "0.55rem 0.75rem",
+            background: "#fff",
+            minWidth: 180,
+          }}
+        >
+          <option value="">Todas as pessoas</option>
+          {people.map((p) => (
+            <option key={p} value={p}>
+              @{p}
+            </option>
+          ))}
+        </select>
         <input
-          placeholder="Filtrar por pessoa, tema ou contexto…"
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
+          placeholder="Filtrar por tema ou contexto…"
+          value={filtroTexto}
+          onChange={(e) => setFiltroTexto(e.target.value)}
           style={{
             flex: 1,
-            minWidth: 200,
+            minWidth: 180,
             border: "1px solid var(--line)",
             borderRadius: 10,
             padding: "0.55rem 0.75rem",
@@ -83,10 +153,36 @@ export default function FeedbacksPage() {
         </button>
       </div>
 
+      {pessoa ? (
+        <section className="overview-panel" style={{ marginBottom: "1rem" }}>
+          <h2>Histórico de @{pessoa}</h2>
+          {personHits.length === 0 ? (
+            <p className="empty-hint">
+              Nada encontrado. Mencione com @{pessoa} em atividades ou updates.
+            </p>
+          ) : (
+            <ul className="overview-list">
+              {personHits.map((h) => (
+                <li key={h.id}>
+                  <Link href={h.href}>
+                    <span>
+                      [{kindLabel[h.kind]}] {h.titulo}
+                    </span>
+                  </Link>
+                  <span className="muted">
+                    {h.data} · {h.detalhe}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
       {data === null ? (
         <p className="empty-hint">Carregando…</p>
       ) : items.length === 0 ? (
-        <p className="empty-hint">Nenhum feedback registrado.</p>
+        <p className="empty-hint">Nenhum feedback neste filtro.</p>
       ) : (
         <div className="list-stack">
           {items.map((f) => (
@@ -120,13 +216,13 @@ export default function FeedbacksPage() {
                 Fechar
               </button>
             </div>
-            <div className="field">
-              <label>De quem</label>
-              <input
-                value={open.deQuem}
-                onChange={(e) => patch({ ...open, deQuem: e.target.value })}
-              />
-            </div>
+            <MentionInput
+              label="De quem"
+              value={open.deQuem}
+              people={people}
+              placeholder="Maria ou @Maria"
+              onChange={(v) => patch({ ...open, deQuem: v })}
+            />
             <div className="field">
               <label>Data</label>
               <input
@@ -135,20 +231,20 @@ export default function FeedbacksPage() {
                 onChange={(e) => patch({ ...open, data: e.target.value })}
               />
             </div>
-            <div className="field">
-              <label>Tema</label>
-              <input
-                value={open.tema}
-                onChange={(e) => patch({ ...open, tema: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Citação / contexto</label>
-              <textarea
-                value={open.contexto}
-                onChange={(e) => patch({ ...open, contexto: e.target.value })}
-              />
-            </div>
+            <MentionInput
+              label="Tema"
+              value={open.tema}
+              people={people}
+              onChange={(v) => patch({ ...open, tema: v })}
+            />
+            <MentionInput
+              label="Citação / contexto"
+              value={open.contexto}
+              people={people}
+              multiline
+              rows={4}
+              onChange={(v) => patch({ ...open, contexto: v })}
+            />
             <button
               type="button"
               className="hub-ghost-btn"

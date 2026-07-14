@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { nanoid } from "nanoid";
+import { MentionInput } from "@/components/mention-input";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
 import {
   removeAtividadeMirror,
   syncAtividadeIntoProjetos,
 } from "@/lib/atividade-sync";
+import { collectPeople } from "@/lib/mentions";
 import type { Atividade } from "@/lib/types";
+import { useMemo, useState } from "react";
+import { nanoid } from "nanoid";
 
 function emptyAtividade(): Atividade {
   const now = new Date().toISOString();
@@ -38,9 +40,20 @@ export default function AtividadesPage() {
     status: statusP,
     error: errorP,
   } = useCollection("projetos");
+  const { data: feedbacks } = useCollection("feedbacks");
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("");
+
+  const people = useMemo(
+    () =>
+      collectPeople({
+        feedbacks,
+        atividades,
+        projetos,
+      }),
+    [feedbacks, atividades, projetos],
+  );
 
   const status =
     statusA === "error" || statusP === "error"
@@ -189,13 +202,13 @@ export default function AtividadesPage() {
                 onChange={(e) => patchOpen({ date: e.target.value })}
               />
             </div>
-            <div className="field">
-              <label>O que fiz</label>
-              <textarea
-                value={open.titulo}
-                onChange={(e) => patchOpen({ titulo: e.target.value })}
-              />
-            </div>
+            <MentionInput
+              label="O que fiz"
+              value={open.titulo}
+              people={people}
+              multiline
+              onChange={(v) => patchOpen({ titulo: v })}
+            />
             <div className="field">
               <label>Projeto (opcional)</label>
               <select
@@ -214,34 +227,31 @@ export default function AtividadesPage() {
                 ))}
               </select>
             </div>
-            <div className="field">
-              <label>Decisão / mudança</label>
-              <input
-                value={open.decisao ?? ""}
-                onChange={(e) => patchOpen({ decisao: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Evidência</label>
-              <input
-                value={open.evidencia ?? ""}
-                onChange={(e) => patchOpen({ evidencia: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Resultado parcial</label>
-              <input
-                value={open.resultado ?? ""}
-                onChange={(e) => patchOpen({ resultado: e.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Notas</label>
-              <textarea
-                value={open.notas ?? ""}
-                onChange={(e) => patchOpen({ notas: e.target.value })}
-              />
-            </div>
+            <MentionInput
+              label="Decisão / mudança"
+              value={open.decisao ?? ""}
+              people={people}
+              onChange={(v) => patchOpen({ decisao: v })}
+            />
+            <MentionInput
+              label="Evidência"
+              value={open.evidencia ?? ""}
+              people={people}
+              onChange={(v) => patchOpen({ evidencia: v })}
+            />
+            <MentionInput
+              label="Resultado parcial"
+              value={open.resultado ?? ""}
+              people={people}
+              onChange={(v) => patchOpen({ resultado: v })}
+            />
+            <MentionInput
+              label="Notas"
+              value={open.notas ?? ""}
+              people={people}
+              multiline
+              onChange={(v) => patchOpen({ notas: v })}
+            />
             {open.projetoId ? (
               <p className="empty-hint">
                 Vinculada: esta atividade entra como update no projeto
