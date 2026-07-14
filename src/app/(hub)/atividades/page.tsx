@@ -117,28 +117,29 @@ export default function AtividadesPage() {
       window.alert('Preencha "O que fiz" antes de salvar.');
       return;
     }
+    if (draft.projetoId && projetos === null) {
+      window.alert("Aguarde o carregamento dos projetos e tente de novo.");
+      return;
+    }
     const previous = isNew
       ? null
       : (atividades ?? []).find((a) => a.id === draft.id) ?? null;
     const stamped = { ...draft, updatedAt: new Date().toISOString() };
 
-    if (projetos) {
-      const synced = syncAtividadeIntoProjetos(projetos, stamped, previous);
-      setProjetos(() => synced.projetos);
-      if (isNew) {
-        setAtividades((prev) => [synced.atividade, ...prev]);
-      } else {
-        setAtividades((prev) =>
-          prev.map((a) =>
-            a.id === synced.atividade.id ? synced.atividade : a,
-          ),
-        );
-      }
-    } else if (isNew) {
-      setAtividades((prev) => [stamped, ...prev]);
+    let nextAtividade = stamped;
+    if (projetos !== null) {
+      setProjetos((prev) => {
+        const synced = syncAtividadeIntoProjetos(prev, stamped, previous);
+        nextAtividade = synced.atividade;
+        return synced.projetos;
+      });
+    }
+
+    if (isNew) {
+      setAtividades((prev) => [nextAtividade, ...prev]);
     } else {
       setAtividades((prev) =>
-        prev.map((a) => (a.id === stamped.id ? stamped : a)),
+        prev.map((a) => (a.id === nextAtividade.id ? nextAtividade : a)),
       );
     }
     closeDrawer();
@@ -150,8 +151,8 @@ export default function AtividadesPage() {
       return;
     }
     const existing = (atividades ?? []).find((a) => a.id === draft.id);
-    if (existing && projetos) {
-      setProjetos(() => removeAtividadeMirror(projetos, existing));
+    if (existing?.projetoId) {
+      setProjetos((prev) => removeAtividadeMirror(prev, existing));
     }
     setAtividades((prev) => prev.filter((a) => a.id !== draft.id));
     closeDrawer();
@@ -264,7 +265,10 @@ export default function AtividadesPage() {
               />
               {draft.projetoId ? (
                 <p className="empty-hint">
-                  Ao salvar, esta atividade entra como update no projeto.
+                  Ao salvar, cria (ou atualiza) um update em{" "}
+                  {projetos?.find((p) => p.id === draft.projetoId)?.titulo ||
+                    "projeto"}
+                  .
                 </p>
               ) : null}
             </div>

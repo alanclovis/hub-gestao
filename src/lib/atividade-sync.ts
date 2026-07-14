@@ -8,7 +8,7 @@ export function atividadeToUpdate(a: Atividade, updateId: string): ProjetoUpdate
     oQueFiz: a.titulo,
     decisao: a.decisao ?? "",
     evidencia: a.evidencia ?? "",
-    resultado: a.resultado ?? "",
+    resultado: (a.resultado ?? "").trim() || (a.notas ?? "").trim() || "",
   };
 }
 
