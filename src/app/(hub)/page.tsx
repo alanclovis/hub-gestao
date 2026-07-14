@@ -4,11 +4,15 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SaveBadge } from "@/components/save-badge";
 import { useAllData } from "@/hooks/use-collection";
+import { useMonitorias } from "@/hooks/use-monitorias";
 import { buildInsights, type InsightPeriod } from "@/lib/insights";
+import { formatMinutes, shortFila } from "@/lib/monitorias";
 
 export default function HomePage() {
   const { data, status, error } = useAllData();
   const [period, setPeriod] = useState<InsightPeriod>("semana");
+  const { summary: mon, status: monStatus, error: monError } =
+    useMonitorias(period);
 
   const insights = useMemo(
     () => (data ? buildInsights(data, period) : null),
@@ -62,6 +66,37 @@ export default function HomePage() {
             </section>
 
             <section className="overview-panel">
+              <h2>Monitorias qualidade</h2>
+              {monStatus === "loading" ? (
+                <p className="empty-hint">Lendo planilha…</p>
+              ) : monError ? (
+                <p className="empty-hint" style={{ color: "var(--danger)" }}>
+                  {monError}
+                </p>
+              ) : mon ? (
+                <>
+                  <p className="insight-stat">{formatMinutes(mon.minutos)}</p>
+                  <p className="empty-hint">
+                    {mon.count} monitorias neste período
+                  </p>
+                  {mon.porFila[0] ? (
+                    <p className="empty-hint" style={{ marginTop: "0.5rem" }}>
+                      Top fila: {shortFila(mon.porFila[0].fila)} (
+                      {formatMinutes(mon.porFila[0].minutos)})
+                    </p>
+                  ) : null}
+                  <p style={{ marginTop: "1rem" }}>
+                    <Link href="/monitorias/" className="hub-secondary-btn">
+                      Detalhes
+                    </Link>
+                  </p>
+                </>
+              ) : (
+                <p className="empty-hint">Sem dados.</p>
+              )}
+            </section>
+
+            <section className="overview-panel">
               <h2>O que você fez</h2>
               {insights.timeline.length === 0 ? (
                 <p className="empty-hint">Nada registrado neste período.</p>
@@ -81,7 +116,9 @@ export default function HomePage() {
                 </ul>
               )}
             </section>
+          </div>
 
+          <div className="overview-grid" style={{ marginTop: "1rem" }}>
             <section className="overview-panel">
               <h2>Projetos movimentados</h2>
               {insights.projetosMovidos.length === 0 ? (
@@ -99,9 +136,7 @@ export default function HomePage() {
                 </ul>
               )}
             </section>
-          </div>
 
-          <div className="overview-grid" style={{ marginTop: "1rem" }}>
             <section className="overview-panel">
               <h2>Atalhos</h2>
               <ul className="overview-list">
@@ -114,11 +149,11 @@ export default function HomePage() {
                   <span className="muted">{insights.projetosEmAndamento}</span>
                 </li>
                 <li>
-                  <Link href="/one-ones/">1:1s</Link>
-                  <span className="muted">abrir</span>
+                  <Link href="/monitorias/">Monitorias</Link>
+                  <span className="muted">planilha</span>
                 </li>
                 <li>
-                  <Link href="/feedbacks/">Feedbacks</Link>
+                  <Link href="/one-ones/">1:1s</Link>
                   <span className="muted">abrir</span>
                 </li>
               </ul>
