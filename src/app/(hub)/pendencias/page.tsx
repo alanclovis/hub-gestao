@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
+import { appendPendenciaConcluidaUpdate } from "@/lib/pendencia-sync";
 import type { Pendencia, PendenciaStatus } from "@/lib/types";
 
 function emptyPendencia(): Pendencia {
@@ -21,13 +22,30 @@ function emptyPendencia(): Pendencia {
 
 export default function PendenciasPage() {
   const { data, setData, status, error } = useCollection("pendencias");
-  const { data: projetos } = useCollection("projetos");
+  const {
+    data: projetos,
+    setData: setProjetos,
+    status: statusP,
+    error: errorP,
+  } = useCollection("projetos");
   const [draft, setDraft] = useState<Pendencia | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<"todas" | PendenciaStatus>(
     "aberta",
   );
+
+  const saveStatus =
+    status === "error" || statusP === "error"
+      ? "error"
+      : status === "saving" || statusP === "saving"
+        ? "saving"
+        : status === "loading" || statusP === "loading"
+          ? "loading"
+          : status === "saved" || statusP === "saved"
+            ? "saved"
+            : "idle";
+  const saveError = error || errorP;
 
   const items = useMemo(() => {
     const list = [...(data ?? [])].sort((a, b) =>
@@ -36,6 +54,9 @@ export default function PendenciasPage() {
     if (filtroStatus === "todas") return list;
     return list.filter((p) => p.status === filtroStatus);
   }, [data, filtroStatus]);
+
+  const projetoTitulo = (id?: string) =>
+    projetos?.find((p) => p.id === id)?.titulo ?? "projeto";
 
   const closeDrawer = () => {
     setDraft(null);
@@ -65,18 +86,77 @@ export default function PendenciasPage() {
     setDirty(true);
   };
 
+  const persist = (next: Pendencia, previousStatus?: PendenciaStatus) => {
+    const stamped = { ...next, updatedAt: new Date().toISOString() };
+    const becomingDone =
+      stamped.status === "feita" && previousStatus !== "feita";
+
+    if (becomingDone && stamped.projetoId && projetos) {
+      setProjetos(() =>
+        appendPendenciaConcluidaUpdate(projetos, stamped),
+      );
+    }
+
+    const exists = (data ?? []).some((p) => p.id === stamped.id);
+    if (exists) {
+      setData((prev) =>
+        prev.map((p) => (p.id === stamped.id ? stamped : p)),
+      );
+    } else {
+      setData((prev) => [stamped, ...prev]);
+    }
+    return stamped;
+  };
+
   const save = () => {
     if (!draft) return;
     if (!draft.titulo.trim()) {
       window.alert("Preencha o título antes de salvar.");
       return;
     }
-    const stamped = { ...draft, updatedAt: new Date().toISOString() };
-    if (isNew) setData((prev) => [stamped, ...prev]);
-    else
-      setData((prev) =>
-        prev.map((p) => (p.id === stamped.id ? stamped : p)),
-      );
+    const previous = isNew
+      ? undefined
+      : (data ?? []).find((p) => p.id === draft.id)?.status;
+    persist(draft, previous);
+    closeDrawer();
+  };
+
+  const markDone = (p: Pendencia) => {
+    if (p.status === "feita") return;
+    if (!p.titulo.trim()) {
+      window.alert("Salve a pendência com um título antes de concluir.");
+      return;
+    }
+    persist({ ...p, status: "feita" }, p.status);
+    if (draft?.id === p.id) {
+      setDraft({ ...p, status: "feita" });
+      setDirty(false);
+      setIsNew(false);
+    }
+  };
+
+  const markOpen = (p: Pendencia) => {
+    if (p.status === "aberta") return;
+    persist({ ...p, status: "aberta" }, p.status);
+    if (draft?.id === p.id) {
+      setDraft({ ...p, status: "aberta" });
+      setDirty(false);
+    }
+  };
+
+  const completeFromDraft = () => {
+    if (!draft) return;
+    if (!draft.titulo.trim()) {
+      window.alert("Preencha o título antes de concluir.");
+      return;
+    }
+    const previous = isNew
+      ? undefined
+      : (data ?? []).find((p) => p.id === draft.id)?.status;
+    const stamped = persist({ ...draft, status: "feita" }, previous);
+    setDraft(stamped);
+    setIsNew(false);
+    setDirty(false);
     closeDrawer();
   };
 
@@ -95,9 +175,12 @@ export default function PendenciasPage() {
         <div>
           <p className="hub-kicker">Agenda</p>
           <h1>Pendências</h1>
-          <p>O que ainda precisa fechar.</p>
+          <p>
+            Conclua na lista ou no drawer. Com projeto vinculado, a conclusão
+            vira update.
+          </p>
         </div>
-        <SaveBadge status={status} error={error} />
+        <SaveBadge status={saveStatus} error={saveError} />
       </header>
 
       <div className="list-toolbar">
@@ -117,29 +200,47 @@ export default function PendenciasPage() {
         </button>
       </div>
 
-      {data === null ? (
+      {data === null || projetos === null ? (
         <p className="empty-hint">Carregando…</p>
       ) : items.length === 0 ? (
         <p className="empty-hint">Nada por aqui.</p>
       ) : (
         <div className="list-stack">
           {items.map((p) => (
-            <button
-              type="button"
+            <div
               key={p.id}
-              className={`list-item${p.status === "feita" ? " is-done" : ""}`}
-              onClick={() => openExisting(p)}
-              style={{ textAlign: "left", width: "100%" }}
+              className={`list-item list-item-row${p.status === "feita" ? " is-done" : ""}`}
             >
-              <h3>{p.titulo || "Sem título"}</h3>
-              <p className="meta">
-                {p.status === "aberta" ? "Aberta" : "Feita"}
-                {p.prazo ? ` · prazo ${p.prazo}` : ""}
-                {p.projetoId
-                  ? ` · ${projetos?.find((x) => x.id === p.projetoId)?.titulo ?? "projeto"}`
-                  : ""}
-              </p>
-            </button>
+              <button
+                type="button"
+                className="list-item-main"
+                onClick={() => openExisting(p)}
+              >
+                <h3>{p.titulo || "Sem título"}</h3>
+                <p className="meta">
+                  {p.status === "aberta" ? "Aberta" : "Concluída"}
+                  {p.prazo ? ` · prazo ${p.prazo}` : ""}
+                  {p.projetoId ? ` · ${projetoTitulo(p.projetoId)}` : ""}
+                </p>
+              </button>
+              {p.status === "aberta" ? (
+                <button
+                  type="button"
+                  className="hub-secondary-btn pend-done-btn"
+                  onClick={() => markDone(p)}
+                >
+                  Concluir
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="hub-ghost-btn pend-done-btn"
+                  onClick={() => markOpen(p)}
+                >
+                  Reabrir
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -162,29 +263,13 @@ export default function PendenciasPage() {
                   onChange={(e) => patchDraft({ titulo: e.target.value })}
                 />
               </div>
-              <div className="field-row">
-                <div className="field">
-                  <label>Status</label>
-                  <select
-                    value={draft.status}
-                    onChange={(e) =>
-                      patchDraft({
-                        status: e.target.value as PendenciaStatus,
-                      })
-                    }
-                  >
-                    <option value="aberta">Aberta</option>
-                    <option value="feita">Feita</option>
-                  </select>
-                </div>
-                <div className="field">
-                  <label>Prazo</label>
-                  <input
-                    type="date"
-                    value={draft.prazo ?? ""}
-                    onChange={(e) => patchDraft({ prazo: e.target.value })}
-                  />
-                </div>
+              <div className="field">
+                <label>Prazo</label>
+                <input
+                  type="date"
+                  value={draft.prazo ?? ""}
+                  onChange={(e) => patchDraft({ prazo: e.target.value })}
+                />
               </div>
               <div className="field">
                 <label>Notas</label>
@@ -212,15 +297,48 @@ export default function PendenciasPage() {
                   ))}
                 </select>
               </div>
+              {draft.projetoId && draft.status === "aberta" ? (
+                <p className="empty-hint">
+                  Ao concluir, um update será adicionado em{" "}
+                  {projetoTitulo(draft.projetoId)}.
+                </p>
+              ) : null}
+              {draft.status === "feita" ? (
+                <p className="empty-hint">Status: concluída.</p>
+              ) : null}
             </div>
             <div className="drawer-footer">
               <div className="drawer-actions">
-                <button type="button" className="hub-primary-btn" onClick={save}>
+                {draft.status === "aberta" ? (
+                  <button
+                    type="button"
+                    className="hub-primary-btn"
+                    onClick={completeFromDraft}
+                  >
+                    Marcar como concluída
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="hub-secondary-btn"
+                    onClick={() => {
+                      const previous = (data ?? []).find(
+                        (p) => p.id === draft.id,
+                      )?.status;
+                      persist({ ...draft, status: "aberta" }, previous);
+                      setDraft({ ...draft, status: "aberta" });
+                      setDirty(false);
+                    }}
+                  >
+                    Reabrir
+                  </button>
+                )}
+                <button type="button" className="hub-secondary-btn" onClick={save}>
                   Salvar
                 </button>
                 <button
                   type="button"
-                  className="hub-secondary-btn"
+                  className="hub-ghost-btn"
                   onClick={tryClose}
                 >
                   Cancelar

@@ -776,6 +776,41 @@ select {
   color: var(--ink-muted);
 }
 
+.list-item-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.7rem 0.55rem 0.15rem;
+  cursor: default;
+}
+
+.list-item-row:hover {
+  transform: none;
+}
+
+.list-item-main {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0.35rem 0.55rem 0.35rem 0.75rem;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.list-item-main h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-family: var(--font-display), serif;
+}
+
+.pend-done-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .login-screen {
   min-height: 100vh;
   display: grid;
