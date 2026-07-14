@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { SettingsPanel } from "@/components/settings-panel";
+import { useCollection } from "@/hooks/use-collection";
+import { countDueOpenPendencias } from "@/lib/pendencia-sync";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -20,8 +22,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { data: pendencias } = useCollection("pendencias");
   const [navOpen, setNavOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const pendenciaBadge = useMemo(
+    () => countDueOpenPendencias(pendencias),
+    [pendencias],
+  );
 
   useEffect(() => {
     setNavOpen(false);
@@ -87,13 +95,23 @@ export function Sidebar() {
               item.href === "/"
                 ? pathname === "/" || pathname === ""
                 : pathname.startsWith(item.href);
+            const showBadge =
+              item.href === "/pendencias" && pendenciaBadge > 0;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`hub-nav-link${active ? " is-active" : ""}`}
               >
-                {item.label}
+                <span>{item.label}</span>
+                {showBadge ? (
+                  <span
+                    className="nav-badge"
+                    aria-label={`${pendenciaBadge} pendências em aberto`}
+                  >
+                    {pendenciaBadge > 99 ? "99+" : pendenciaBadge}
+                  </span>
+                ) : null}
               </Link>
             );
           })}
