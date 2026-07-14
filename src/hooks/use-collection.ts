@@ -57,7 +57,11 @@ export function useCollection<K extends CollectionName>(name: K) {
         setStatus("saved");
         setTimeout(() => setStatus("idle"), 1200);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao salvar");
+        const raw = err instanceof Error ? err.message : "Erro ao salvar";
+        const friendly = raw.includes("409")
+          ? "Conflito ao salvar no Gist — tente de novo em 1s"
+          : raw;
+        setError(friendly);
         setStatus("error");
       }
     },

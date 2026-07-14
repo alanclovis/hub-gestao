@@ -15,6 +15,22 @@ type GistResponse = {
   files: Record<string, GistFile>;
 };
 
+/** Serializa writes no Gist — evita HTTP 409 por PATCH concorrente. */
+let writeChain: Promise<void> = Promise.resolve();
+
+function enqueueWrite<T>(fn: () => Promise<T>): Promise<T> {
+  const run = writeChain.then(fn, fn);
+  writeChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function gh<T>(
   token: string,
   path: string,
@@ -41,6 +57,10 @@ async function gh<T>(
   return res.json() as Promise<T>;
 }
 
+function isConflict(err: unknown): boolean {
+  return err instanceof Error && err.message.includes("GitHub API 409");
+}
+
 function buildFilesPayload(data: CollectionMap): Record<string, { content: string }> {
   const files: Record<string, { content: string }> = {};
   (Object.keys(data) as (keyof CollectionMap)[]).forEach((key) => {
@@ -54,7 +74,6 @@ function buildFilesPayload(data: CollectionMap): Record<string, { content: strin
 export async function findHubGist(
   token: string,
 ): Promise<GistResponse | null> {
-  // List first pages of gists looking for our description
   for (let page = 1; page <= 5; page++) {
     const gists = await gh<GistResponse[]>(
       token,
@@ -133,53 +152,74 @@ export async function getAllCollections(
   };
 }
 
+async function patchGistFiles(
+  token: string,
+  gistId: string,
+  files: Record<string, { content: string }>,
+): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      await gh<GistResponse>(token, `/gists/${gistId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ files }),
+      });
+      return;
+    } catch (err) {
+      lastError = err;
+      if (!isConflict(err) || attempt === 3) break;
+      await sleep(250 * (attempt + 1));
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Falha ao gravar no Gist");
+}
+
 export async function putCollection<K extends CollectionName>(
   token: string,
   name: K,
   data: CollectionMap[K],
 ): Promise<CollectionMap[K]> {
-  const gist = await ensureHubGist(token);
-  const meta = {
-    ...readCollectionFromGist(gist, "meta"),
-    gistId: gist.id,
-    lastSync: new Date().toISOString(),
-  };
-  await gh<GistResponse>(token, `/gists/${gist.id}`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      files: {
-        [fileNameFor(name)]: {
-          content: JSON.stringify(data, null, 2),
-        },
-        [fileNameFor("meta")]: {
-          content: JSON.stringify(meta, null, 2),
-        },
+  return enqueueWrite(async () => {
+    const gist = await ensureHubGist(token);
+    const meta = {
+      ...readCollectionFromGist(gist, "meta"),
+      gistId: gist.id,
+      lastSync: new Date().toISOString(),
+      schemaVersion: SCHEMA_VERSION,
+    };
+    await patchGistFiles(token, gist.id, {
+      [fileNameFor(name)]: {
+        content: JSON.stringify(data, null, 2),
       },
-    }),
+      [fileNameFor("meta")]: {
+        content: JSON.stringify(meta, null, 2),
+      },
+    });
+    return data;
   });
-  return data;
 }
 
 export async function putAllCollections(
   token: string,
   data: Omit<CollectionMap, "meta"> & { meta?: CollectionMap["meta"] },
 ): Promise<CollectionMap> {
-  const gist = await ensureHubGist(token);
-  const full: CollectionMap = {
-    projetos: data.projetos,
-    atividades: data.atividades ?? [],
-    oneones: data.oneones,
-    feedbacks: data.feedbacks,
-    pendencias: data.pendencias,
-    meta: {
-      schemaVersion: data.meta?.schemaVersion ?? SCHEMA_VERSION,
-      gistId: gist.id,
-      lastSync: new Date().toISOString(),
-    },
-  };
-  await gh<GistResponse>(token, `/gists/${gist.id}`, {
-    method: "PATCH",
-    body: JSON.stringify({ files: buildFilesPayload(full) }),
+  return enqueueWrite(async () => {
+    const gist = await ensureHubGist(token);
+    const full: CollectionMap = {
+      projetos: data.projetos,
+      atividades: data.atividades ?? [],
+      oneones: data.oneones,
+      feedbacks: data.feedbacks,
+      pendencias: data.pendencias,
+      meta: {
+        schemaVersion: data.meta?.schemaVersion ?? SCHEMA_VERSION,
+        gistId: gist.id,
+        lastSync: new Date().toISOString(),
+      },
+    };
+    await patchGistFiles(token, gist.id, buildFilesPayload(full));
+    return full;
   });
-  return full;
 }
