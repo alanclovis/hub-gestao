@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hub Gestão
 
-## Getting Started
+Hub pessoal de gestão: **Projetos** (Kanban), **1:1s**, **Feedbacks** e **Pendências**.  
+Os dados ficam num **Gist privado** na sua conta GitHub — acessível de qualquer lugar após o deploy.
 
-First, run the development server:
+## Stack
+
+- Next.js 15 (App Router) + TypeScript
+- Auth.js (NextAuth v5) com GitHub OAuth (`gist` scope)
+- Persistência via GitHub Gist API
+- Drag-and-drop com `@dnd-kit`
+
+## Setup local
+
+### 1. Variáveis de ambiente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Preencha:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variável | Onde pegar |
+|----------|------------|
+| `GITHUB_ID` / `GITHUB_SECRET` | [GitHub OAuth Apps](https://github.com/settings/developers) → New OAuth App |
+| `NEXTAUTH_SECRET` | `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | `http://localhost:3000` no local |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**OAuth App:**
+- Homepage URL: `http://localhost:3000`
+- Authorization callback URL: `http://localhost:3000/api/auth/callback/github`
 
-## Learn More
+### 2. Instalar e rodar
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Abra http://localhost:3000 → **Entrar com GitHub**.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Na primeira leitura/gravação, o app cria automaticamente um Gist privado com description:
 
-## Deploy on Vercel
+`Hub Gestão — dados`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Arquivos no Gist: `projetos.json`, `oneones.json`, `feedbacks.json`, `pendencias.json`, `meta.json`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Uso
+
+| Área | Como usar |
+|------|-----------|
+| Projetos | `+ Novo projeto`, arraste entre colunas, clique no card para editar e adicionar updates diários |
+| 1:1s | Registre pessoa, data, pauta, combinados, follow-ups |
+| Feedbacks | De quem, tema, contexto |
+| Pendências | Título, prazo, status aberta/feita |
+| Home | Overview de pendências abertas, projetos em andamento e 1:1s recentes |
+
+Cada alteração é salva no Gist com debounce (~500ms). O badge no topo mostra o status.
+
+## Deploy (Vercel)
+
+1. Crie o repositório no GitHub e faça push.
+2. Importe no Vercel.
+3. Configure as mesmas env vars; `NEXTAUTH_URL` = URL do deploy (ex.: `https://hub-gestao.vercel.app`).
+4. Atualize o OAuth App:
+   - Homepage = URL de produção
+   - Callback = `https://SEU_DOMINIO/api/auth/callback/github`  
+   (pode manter também o callback de localhost se o OAuth App aceitar um; em produção use um OAuth App separado ou URLs múltiplas se disponível.)
+
+## Revisar o ano com IA
+
+Com o Gist sincronizado, peça no Cursor:
+
+> Leia os JSON do Gist “Hub Gestão — dados” (ou exporte `projetos.json` etc.) e classifique por KR, top 10 entregas e resumo executivo.
+
+Ou use a API do GitHub Gist para baixar os arquivos.
+
+## Scripts
+
+```bash
+npm run dev      # desenvolvimento
+npm run build    # build produção
+npm run start    # servidor produção
+```
