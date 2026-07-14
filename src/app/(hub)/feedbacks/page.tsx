@@ -38,6 +38,7 @@ export default function FeedbacksPage() {
   const { data, setData, status, error } = useCollection("feedbacks");
   const { data: atividades } = useCollection("atividades");
   const { data: projetos } = useCollection("projetos");
+  const { data: oneones } = useCollection("oneones");
   const [draft, setDraft] = useState<Feedback | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -50,8 +51,9 @@ export default function FeedbacksPage() {
         feedbacks: data,
         atividades,
         projetos,
+        oneones,
       }),
-    [data, atividades, projetos],
+    [data, atividades, projetos, oneones],
   );
 
   const items = useMemo(() => {

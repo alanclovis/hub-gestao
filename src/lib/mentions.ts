@@ -1,4 +1,4 @@
-import type { Atividade, Feedback, Projeto } from "./types";
+import type { Atividade, Feedback, OneOnOne, Projeto } from "./types";
 
 /** @Nome, @Ana_Paula, @João.Silva — até espaço ou pontuação */
 export const MENTION_RE = /@([\p{L}\p{N}_.-]+)/gu;
@@ -30,24 +30,33 @@ function remember(
   name: string | undefined | null,
 ) {
   if (!name?.trim()) return;
-  const key = normalizePerson(name);
+  const bare = name.trim().replace(/^@+/, "");
+  if (!bare) return;
+  const key = normalizePerson(bare);
   if (!key) return;
-  if (!map.has(key)) map.set(key, name.trim());
+  if (!map.has(key)) map.set(key, bare);
 }
 
-/** Pessoas conhecidas: deQuem + @mentions em textos. */
+/** Pessoas conhecidas: campos de pessoa + @mentions em textos. */
 export function collectPeople(data: {
   feedbacks?: Feedback[] | null;
   atividades?: Atividade[] | null;
   projetos?: Projeto[] | null;
+  oneones?: OneOnOne[] | null;
 }): string[] {
   const map = new Map<string, string>();
 
   (data.feedbacks ?? []).forEach((f) => {
     remember(map, f.deQuem);
-    extractMentions(f.deQuem).forEach((m) => remember(map, m));
     extractMentions(f.tema).forEach((m) => remember(map, m));
     extractMentions(f.contexto).forEach((m) => remember(map, m));
+  });
+
+  (data.oneones ?? []).forEach((o) => {
+    remember(map, o.pessoa);
+    extractMentions(o.pauta).forEach((m) => remember(map, m));
+    extractMentions(o.combinados).forEach((m) => remember(map, m));
+    extractMentions(o.followUps).forEach((m) => remember(map, m));
   });
 
   (data.atividades ?? []).forEach((a) => {

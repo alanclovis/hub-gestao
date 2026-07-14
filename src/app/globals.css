@@ -987,6 +987,12 @@ select {
   overflow: auto;
 }
 
+.mention-suggest-empty {
+  padding: 0.5rem 0.55rem;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
 .mention-suggest button {
   width: 100%;
   text-align: left;

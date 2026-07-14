@@ -41,6 +41,7 @@ export default function AtividadesPage() {
     error: errorP,
   } = useCollection("projetos");
   const { data: feedbacks } = useCollection("feedbacks");
+  const { data: oneones } = useCollection("oneones");
 
   const [draft, setDraft] = useState<Atividade | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -53,8 +54,9 @@ export default function AtividadesPage() {
         feedbacks,
         atividades,
         projetos,
+        oneones,
       }),
-    [feedbacks, atividades, projetos],
+    [feedbacks, atividades, projetos, oneones],
   );
 
   const status =

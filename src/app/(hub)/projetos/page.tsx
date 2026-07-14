@@ -22,6 +22,7 @@ export default function ProjetosPage() {
     error: errorA,
   } = useCollection("atividades");
   const { data: feedbacks } = useCollection("feedbacks");
+  const { data: oneones } = useCollection("oneones");
 
   const people = useMemo(
     () =>
@@ -29,8 +30,9 @@ export default function ProjetosPage() {
         feedbacks,
         atividades,
         projetos,
+        oneones,
       }),
-    [feedbacks, atividades, projetos],
+    [feedbacks, atividades, projetos, oneones],
   );
 
   const status =
