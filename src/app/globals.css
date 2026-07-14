@@ -12,8 +12,12 @@
   --teal-deep: #0a4d54;
   --teal-soft: #d2ecee;
   --accent: #1f7a8c;
-  --mention-bg: #b8f0c8;
-  --mention-fg: #0a3d2a;
+  --highlight: #d4a017;
+  --highlight-deep: #a67c00;
+  --highlight-soft: #ffe9a8;
+  --highlight-ink: #5c4300;
+  --mention-bg: #ffe08a;
+  --mention-fg: #5c4300;
   --line: rgba(18, 32, 39, 0.1);
   --danger: #9b2c2c;
   --ok: #1f6b4a;
@@ -262,7 +266,7 @@ select {
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--teal);
+  color: var(--highlight-deep);
   font-weight: 700;
 }
 
@@ -312,7 +316,7 @@ select {
 }
 
 .hub-ghost-btn:hover {
-  color: var(--teal);
+  color: var(--highlight-deep);
 }
 
 .hub-primary-btn {
@@ -326,12 +330,13 @@ select {
 }
 
 .hub-secondary-btn {
-  background: var(--teal-soft);
-  color: var(--teal-deep);
+  background: var(--highlight-soft);
+  color: var(--highlight-ink);
 }
 
 .hub-secondary-btn:hover {
-  opacity: 0.9;
+  opacity: 0.92;
+  background: #ffdfa0;
 }
 
 .save-badge {
@@ -407,8 +412,8 @@ select {
   top: 0;
   bottom: 0;
   width: 4px;
-  background: var(--teal);
-  opacity: 0.85;
+  background: var(--highlight);
+  opacity: 0.95;
 }
 
 .overview-panel h2 {
@@ -438,6 +443,12 @@ select {
 .overview-list .muted {
   color: var(--ink-muted);
   font-size: 0.8rem;
+}
+
+.overview-count {
+  color: var(--highlight-deep);
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .empty-hint {
@@ -541,13 +552,13 @@ select {
   border-radius: 12px;
   padding: 0.85rem 0.9rem;
   cursor: grab;
-  border-left: 3px solid var(--teal);
+  border-left: 3px solid var(--highlight);
   transition: transform 140ms ease, border-color 140ms ease;
 }
 
 .proj-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(15, 106, 114, 0.35);
+  border-color: rgba(212, 160, 23, 0.45);
 }
 
 .proj-card.is-dragging {
@@ -770,7 +781,7 @@ select {
   background: #fff;
   border: 1px solid rgba(18, 32, 39, 0.08);
   border-radius: 14px;
-  border-left: 3px solid var(--teal);
+  border-left: 3px solid var(--highlight);
   padding: 0.95rem 1.05rem;
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease,
@@ -778,8 +789,8 @@ select {
 }
 
 .list-item:hover {
-  background: #f4fbfb;
-  border-color: rgba(15, 106, 114, 0.28);
+  background: #fffdf5;
+  border-color: rgba(212, 160, 23, 0.4);
   transform: translateX(2px);
 }
 
@@ -960,8 +971,8 @@ select {
 }
 
 .period-toggle button.is-active {
-  background: var(--teal);
-  color: #f4fffe;
+  background: var(--highlight);
+  color: var(--highlight-ink);
 }
 
 .insight-stat {
@@ -969,7 +980,7 @@ select {
   font-family: var(--font-display), serif;
   font-size: 2.4rem;
   line-height: 1;
-  color: var(--teal-deep);
+  color: var(--highlight-deep);
 }
 
 .overview-list a {
@@ -978,7 +989,7 @@ select {
 }
 
 .overview-list a:hover {
-  color: var(--teal);
+  color: var(--highlight-deep);
 }
 
 .qi-toolbar {

@@ -9,6 +9,15 @@ export type ThemePreset = {
 
 export const THEME_STORAGE_KEY = "hub-gestao-theme";
 
+const highlightDefaults = {
+  "--highlight": "#d4a017",
+  "--highlight-deep": "#a67c00",
+  "--highlight-soft": "#ffe9a8",
+  "--highlight-ink": "#5c4300",
+  "--mention-bg": "#ffe08a",
+  "--mention-fg": "#5c4300",
+};
+
 export const THEMES: ThemePreset[] = [
   {
     id: "teal",
@@ -26,8 +35,7 @@ export const THEMES: ThemePreset[] = [
       "--teal-deep": "#0a4d54",
       "--teal-soft": "#d2ecee",
       "--accent": "#1f7a8c",
-      "--mention-bg": "#b8f0c8",
-      "--mention-fg": "#0a3d2a",
+      ...highlightDefaults,
     },
   },
   {
@@ -46,8 +54,8 @@ export const THEMES: ThemePreset[] = [
       "--teal-deep": "#154676",
       "--teal-soft": "#d3e4f5",
       "--accent": "#2b7db8",
-      "--mention-bg": "#b9dff7",
-      "--mention-fg": "#0f3d5c",
+      ...highlightDefaults,
+      "--highlight": "#e0a800",
     },
   },
   {
@@ -66,8 +74,8 @@ export const THEMES: ThemePreset[] = [
       "--teal-deep": "#235235",
       "--teal-soft": "#d6eadc",
       "--accent": "#3f8558",
-      "--mention-bg": "#d4f0a8",
-      "--mention-fg": "#2a4a12",
+      ...highlightDefaults,
+      "--highlight": "#c9a227",
     },
   },
   {
@@ -86,8 +94,7 @@ export const THEMES: ThemePreset[] = [
       "--teal-deep": "#363e49",
       "--teal-soft": "#e0e4ea",
       "--accent": "#5b6878",
-      "--mention-bg": "#f5e6a8",
-      "--mention-fg": "#4a3b10",
+      ...highlightDefaults,
     },
   },
   {
@@ -106,8 +113,8 @@ export const THEMES: ThemePreset[] = [
       "--teal-deep": "#7a3f24",
       "--teal-soft": "#f0ddd0",
       "--accent": "#b5673c",
-      "--mention-bg": "#ffe08a",
-      "--mention-fg": "#5c3f00",
+      ...highlightDefaults,
+      "--highlight": "#e6b422",
     },
   },
 ];

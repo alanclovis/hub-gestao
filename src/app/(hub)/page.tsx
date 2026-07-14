@@ -132,7 +132,7 @@ export default function HomePage() {
                       <Link href="/projetos/">
                         <span>{p.titulo}</span>
                       </Link>
-                      <span className="muted">{p.updates} update(s)</span>
+                      <span className="overview-count">{p.updates}</span>
                     </li>
                   ))}
                 </ul>
@@ -144,11 +144,11 @@ export default function HomePage() {
               <ul className="overview-list">
                 <li>
                   <Link href="/pendencias/">Pendências abertas</Link>
-                  <span className="muted">{insights.pendenciasAbertas}</span>
+                  <span className="overview-count">{insights.pendenciasAbertas}</span>
                 </li>
                 <li>
                   <Link href="/projetos/">Projetos em andamento</Link>
-                  <span className="muted">{insights.projetosEmAndamento}</span>
+                  <span className="overview-count">{insights.projetosEmAndamento}</span>
                 </li>
                 <li>
                   <Link href="/monitorias/">Monitorias</Link>
