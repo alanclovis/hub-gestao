@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { SaveBadge } from "@/components/save-badge";
+import { useCollection } from "@/hooks/use-collection";
 import { useMonitorias } from "@/hooks/use-monitorias";
+import {
+  buildMonitoriasMetaInsights,
+  getMetaCasosSemana,
+  isWeekViewPeriod,
+  weekStartKey,
+} from "@/lib/monitorias-meta";
 import {
   formatBrDate,
   formatMinDec,
@@ -16,16 +24,40 @@ export default function MonitoriasPage() {
   const [draftFrom, setDraftFrom] = useState("");
   const [draftTo, setDraftTo] = useState("");
   const [custom, setCustom] = useState<{ from: string; to: string } | undefined>();
+  const [draftMeta, setDraftMeta] = useState("");
 
   const { summary, status, error, reload, from, to } = useMonitorias(
     period,
     period === "custom" ? custom : undefined,
   );
+  const {
+    data: meta,
+    setData: setMeta,
+    status: metaStatus,
+    error: metaError,
+  } = useCollection("meta");
 
   useEffect(() => {
     setDraftFrom(from);
     setDraftTo(to);
   }, [from, to]);
+
+  const showWeekMeta = summary ? isWeekViewPeriod(period, from, to) : false;
+  const weekStart = summary ? weekStartKey(summary.from) : "";
+  const savedMeta = getMetaCasosSemana(meta, weekStart);
+
+  useEffect(() => {
+    if (!showWeekMeta) return;
+    setDraftMeta(savedMeta !== undefined ? String(savedMeta) : "");
+  }, [showWeekMeta, weekStart, savedMeta]);
+
+  const metaInsights = useMemo(
+    () =>
+      summary && showWeekMeta
+        ? buildMonitoriasMetaInsights(summary, savedMeta)
+        : null,
+    [summary, showWeekMeta, savedMeta],
+  );
 
   const maxFilaCount = summary?.porFila.reduce((m, f) => Math.max(m, f.count), 0) ?? 1;
 
@@ -33,6 +65,25 @@ export default function MonitoriasPage() {
     if (!draftFrom || !draftTo) return;
     setCustom({ from: draftFrom, to: draftTo });
     setPeriod("custom");
+  };
+
+  const saveMeta = () => {
+    if (!weekStart) return;
+    const n = Number(draftMeta);
+    if (!Number.isFinite(n) || n <= 0) {
+      window.alert("Informe um número válido maior que zero.");
+      return;
+    }
+    setMeta((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        monitoriasMetaCasosPorSemana: {
+          ...prev.monitoriasMetaCasosPorSemana,
+          [weekStart]: Math.round(n),
+        },
+      };
+    });
   };
 
   return (
@@ -114,13 +165,97 @@ export default function MonitoriasPage() {
         </p>
       ) : null}
 
+      {summary && !showWeekMeta ? (
+        <p className="empty-hint qi-meta-hint">
+          Selecione Semana para ver meta e insights da semana.
+        </p>
+      ) : null}
+
+      {summary && showWeekMeta && metaInsights ? (
+        <section
+          className={`qi-meta qi-meta--${metaInsights.status}`}
+          aria-labelledby="qi-meta-title"
+        >
+          <div className="qi-meta-head">
+            <div>
+              <h2 id="qi-meta-title">Meta da semana</h2>
+              <p className="empty-hint">
+                {formatBrDate(metaInsights.weekStart)} –{" "}
+                {formatBrDate(metaInsights.weekEnd)}
+              </p>
+            </div>
+            <SaveBadge status={metaStatus} error={metaError} />
+          </div>
+
+          <div className="qi-meta-form">
+            <label className="qi-meta-field">
+              <span>Meta de casos</span>
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={draftMeta}
+                placeholder="Ex.: 300"
+                onChange={(e) => setDraftMeta(e.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="hub-secondary-btn"
+              onClick={saveMeta}
+              disabled={meta === null || metaStatus === "loading"}
+            >
+              Salvar meta
+            </button>
+          </div>
+
+          {savedMeta !== undefined ? (
+            <>
+              <div className="qi-meta-progress">
+                <div className="qi-meta-bar-track">
+                  <div
+                    className="qi-meta-bar-fill"
+                    style={{
+                      width: `${Math.max(4, metaInsights.progressPct ?? 0)}%`,
+                    }}
+                  />
+                </div>
+                <p className="qi-meta-progress-label">
+                  {metaInsights.atual} / {savedMeta} casos
+                  {metaInsights.progressPct !== undefined
+                    ? ` (${metaInsights.progressPct}%)`
+                    : ""}
+                </p>
+              </div>
+              <ul className="qi-meta-insights">
+                {metaInsights.messages.map((msg) => (
+                  <li key={msg}>{msg}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="empty-hint">
+              Defina a meta da semana para acompanhar progresso, ritmo e
+              projeção.
+              {metaInsights.atual > 0
+                ? ` ${metaInsights.atual} casos registrados até agora.`
+                : ""}
+            </p>
+          )}
+        </section>
+      ) : null}
+
       {summary ? (
         <>
           <div className="qi-kpis">
             <div className="qi-kpi is-accent">
               <span className="qi-kpi-label">Casos</span>
               <span className="qi-kpi-value">{summary.count}</span>
-              <span className="qi-kpi-sub">registros</span>
+              <span className="qi-kpi-sub">
+                {savedMeta !== undefined && showWeekMeta
+                  ? `${summary.count} / ${savedMeta} meta`
+                  : "registros"}
+              </span>
             </div>
             <div className="qi-kpi">
               <span className="qi-kpi-label">TS total</span>

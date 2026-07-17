@@ -1423,6 +1423,134 @@ select {
   font-size: 0.85rem;
 }
 
+.qi-meta-hint {
+  margin: -0.35rem 0 1rem;
+}
+
+.qi-meta {
+  margin-bottom: 1rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(251, 249, 245, 0.92);
+  box-shadow: 0 8px 18px rgba(23, 33, 43, 0.04);
+}
+
+.qi-meta--meta_batida {
+  border-color: rgba(47, 158, 107, 0.35);
+  background: color-mix(in srgb, #2f9e6b 8%, #fff);
+}
+
+.qi-meta--atrasado {
+  border-color: rgba(155, 44, 44, 0.28);
+  background: color-mix(in srgb, var(--danger) 6%, #fff);
+}
+
+.qi-meta--no_ritmo {
+  border-color: rgba(212, 160, 23, 0.35);
+}
+
+.qi-meta-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.qi-meta-head h2 {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-display), serif;
+  font-size: 1.15rem;
+}
+
+.qi-meta-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: flex-end;
+  margin-bottom: 0.85rem;
+}
+
+.qi-meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 9rem;
+}
+
+.qi-meta-field span {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.qi-meta-field input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.45rem 0.6rem;
+  background: #fff;
+  width: 8rem;
+}
+
+.qi-meta-progress {
+  margin-bottom: 0.75rem;
+}
+
+.qi-meta-bar-track {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(23, 33, 43, 0.08);
+  overflow: hidden;
+  margin-bottom: 0.4rem;
+}
+
+.qi-meta-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--teal);
+  transition: width 180ms ease;
+}
+
+.qi-meta--meta_batida .qi-meta-bar-fill {
+  background: #2f9e6b;
+}
+
+.qi-meta--atrasado .qi-meta-bar-fill {
+  background: var(--danger);
+}
+
+.qi-meta--no_ritmo .qi-meta-bar-fill {
+  background: var(--highlight);
+}
+
+.qi-meta-progress-label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+}
+
+.qi-meta-insights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+}
+
+.qi-meta-insights li {
+  padding-left: 0.85rem;
+  position: relative;
+}
+
+.qi-meta-insights li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--teal);
+}
+
 .qi-kpis {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));

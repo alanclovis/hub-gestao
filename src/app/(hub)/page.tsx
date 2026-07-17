@@ -9,6 +9,7 @@ import { useAllData } from "@/hooks/use-collection";
 import { useMonitorias } from "@/hooks/use-monitorias";
 import { buildCalendarEvents } from "@/lib/calendar";
 import { buildInsights, type InsightPeriod } from "@/lib/insights";
+import { getMetaCasosSemana, weekStartKey } from "@/lib/monitorias-meta";
 import { formatMinutes, shortFila } from "@/lib/monitorias";
 
 export default function HomePage() {
@@ -26,6 +27,11 @@ export default function HomePage() {
     () => (data ? buildCalendarEvents(data, monRows) : []),
     [data, monRows],
   );
+
+  const weekMetaCasos =
+    data && mon && period === "semana"
+      ? getMetaCasosSemana(data.meta, weekStartKey(mon.from))
+      : undefined;
 
   return (
     <>
@@ -90,6 +96,11 @@ export default function HomePage() {
                   <p className="empty-hint">
                     {mon.count} monitorias neste período
                   </p>
+                  {weekMetaCasos !== undefined ? (
+                    <p className="empty-hint" style={{ marginTop: "0.35rem" }}>
+                      Meta: {mon.count} / {weekMetaCasos} casos
+                    </p>
+                  ) : null}
                   {mon.porFila[0] ? (
                     <p className="empty-hint" style={{ marginTop: "0.5rem" }}>
                       Top fila: {shortFila(mon.porFila[0].fila)} (

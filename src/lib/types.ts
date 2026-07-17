@@ -103,6 +103,8 @@ export interface Meta {
   schemaVersion: number;
   lastSync: string;
   gistId?: string;
+  /** Meta semanal de casos de monitoria. Chave = segunda-feira (YYYY-MM-DD). */
+  monitoriasMetaCasosPorSemana?: Record<string, number>;
 }
 
 export type CollectionName =
