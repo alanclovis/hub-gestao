@@ -8,6 +8,7 @@ import {
   type Pendencia,
   type Projeto,
 } from "./types";
+import { normalizeProjetoLinks } from "./projeto-links";
 
 export function emptyMeta(): Meta {
   return {
@@ -46,7 +47,11 @@ export function fileNameFor(collection: keyof CollectionMap): string {
 }
 
 export function ensureProjetos(data: unknown): Projeto[] {
-  return Array.isArray(data) ? (data as Projeto[]) : [];
+  if (!Array.isArray(data)) return [];
+  return data.map((item) => {
+    const p = item as Projeto;
+    return { ...p, links: normalizeProjetoLinks(p.links) };
+  });
 }
 
 export function ensureAtividades(data: unknown): Atividade[] {

@@ -26,6 +26,10 @@ import {
 } from "@/lib/report-projeto";
 import { MentionInput } from "@/components/mention-input";
 import { MentionText } from "@/components/mention-text";
+import { normalizeProjetoLinks, sanitizeProjetoLinks } from "@/lib/projeto-links";
+import {
+  ProjetoLinksEditor,
+} from "@/components/projeto-links-editor";
 import {
   PAPEIS,
   STATUS_COLUMNS,
@@ -158,7 +162,7 @@ function ProjectDrawer({
   const [local, setLocal] = useState<Projeto>(() => ({
     ...initial,
     updates: initial.updates.map((u) => ({ ...u })),
-    links: [...initial.links],
+    links: normalizeProjetoLinks(initial.links),
   }));
   const [dirty, setDirty] = useState(false);
   const [updateDraft, setUpdateDraft] = useState<ProjetoUpdate>(emptyUpdateDraft);
@@ -225,7 +229,11 @@ function ProjectDrawer({
       window.alert("Preencha o título antes de salvar.");
       return;
     }
-    const stamped = { ...local, updatedAt: new Date().toISOString() };
+    const stamped = {
+      ...local,
+      links: sanitizeProjetoLinks(local.links),
+      updatedAt: new Date().toISOString(),
+    };
     const prevIds = new Set(initial.updates.map((u) => u.id));
     const nextIds = new Set(stamped.updates.map((u) => u.id));
 
@@ -328,21 +336,13 @@ function ProjectDrawer({
                 placeholder="Abr/26 —"
               />
             </div>
-            <div className="field">
-              <label>Links (um por linha)</label>
-              <textarea
-                rows={2}
-                value={local.links.join("\n")}
-                onChange={(e) =>
-                  patchLocal({
-                    links: e.target.value
-                      .split("\n")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
-                  })
-                }
-              />
-            </div>
+          </div>
+          <div className="field">
+            <label>Links</label>
+            <ProjetoLinksEditor
+              links={local.links}
+              onChange={(links) => patchLocal({ links })}
+            />
           </div>
           <MentionInput
             label="Impacto / resultado"
@@ -651,7 +651,7 @@ export function ProjetosBoard({
       projeto: {
         ...p,
         updates: p.updates.map((u) => ({ ...u })),
-        links: [...p.links],
+        links: normalizeProjetoLinks(p.links),
       },
       isNew: false,
     });

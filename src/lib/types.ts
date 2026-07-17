@@ -20,6 +20,12 @@ export interface ProjetoUpdate {
   resultado: string;
 }
 
+export interface ProjetoLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
 export interface Projeto {
   id: string;
   titulo: string;
@@ -29,7 +35,7 @@ export interface Projeto {
   papel: Papel;
   impacto: string;
   descricao: string;
-  links: string[];
+  links: ProjetoLink[];
   destaque: boolean;
   updates: ProjetoUpdate[];
   createdAt: string;

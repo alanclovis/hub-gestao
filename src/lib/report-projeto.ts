@@ -1,3 +1,4 @@
+import { formatProjetoLinkHref } from "./projeto-links";
 import { STATUS_COLUMNS, type Projeto } from "./types";
 
 function statusLabel(status: Projeto["status"]): string {
@@ -49,7 +50,10 @@ export function buildProjetoReport(projeto: Projeto): string {
 
   if (projeto.links.length) {
     linhas.push("## Links / evidências", "");
-    projeto.links.forEach((l) => linhas.push(`- ${l}`));
+    projeto.links.forEach((l) => {
+      const href = formatProjetoLinkHref(l.url);
+      linhas.push(`- [${l.label || "Link"}](${href})`);
+    });
     linhas.push("");
   }
 

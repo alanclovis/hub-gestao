@@ -1013,6 +1013,73 @@ select {
   margin-bottom: 0.55rem;
 }
 
+.proj-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.proj-links-empty {
+  margin: 0 0 0.15rem;
+}
+
+.proj-links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.proj-link-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.35fr) 1fr auto auto;
+  gap: 0.45rem;
+  align-items: end;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.proj-link-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.proj-link-field span {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+.proj-link-field input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  background: #fff;
+  width: 100%;
+}
+
+.proj-link-open,
+.proj-link-remove {
+  align-self: end;
+  white-space: nowrap;
+}
+
+.proj-link-remove {
+  min-width: 2rem;
+  padding-inline: 0.45rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.proj-link-open-spacer {
+  width: 3.5rem;
+}
+
 .update-feed {
   margin-top: 1.2rem;
   border-top: 1px solid var(--line);
@@ -1848,5 +1915,13 @@ select {
 
   .field-row {
     grid-template-columns: 1fr;
+  }
+
+  .proj-link-row {
+    grid-template-columns: 1fr;
+  }
+
+  .proj-link-open-spacer {
+    display: none;
   }
 }
