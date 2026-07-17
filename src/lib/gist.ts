@@ -183,7 +183,23 @@ export async function putCollection<K extends CollectionName>(
 ): Promise<CollectionMap[K]> {
   return enqueueWrite(async () => {
     const gist = await ensureHubGist(token);
-    const meta = {
+
+    if (name === "meta") {
+      const stamped: CollectionMap["meta"] = {
+        ...(data as CollectionMap["meta"]),
+        gistId: gist.id,
+        lastSync: new Date().toISOString(),
+        schemaVersion: SCHEMA_VERSION,
+      };
+      await patchGistFiles(token, gist.id, {
+        [fileNameFor("meta")]: {
+          content: JSON.stringify(stamped, null, 2),
+        },
+      });
+      return stamped as CollectionMap[K];
+    }
+
+    const meta: CollectionMap["meta"] = {
       ...readCollectionFromGist(gist, "meta"),
       gistId: gist.id,
       lastSync: new Date().toISOString(),
