@@ -919,6 +919,23 @@ select {
   padding: 1rem 1.25rem 0.85rem;
 }
 
+.drawer-section {
+  margin-bottom: 1.1rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid rgba(23, 33, 43, 0.07);
+}
+
+.drawer-section-title {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display), serif;
+  font-size: 1.05rem;
+  color: var(--teal-deep);
+}
+
+.drawer-section-hint {
+  margin: -0.35rem 0 0.65rem;
+}
+
 .drawer-footer {
   flex-shrink: 0;
   padding: 0.95rem 1.25rem 1.2rem;
@@ -1078,6 +1095,64 @@ select {
 
 .proj-link-open-spacer {
   width: 3.5rem;
+}
+
+.proj-colabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.proj-colabs-empty {
+  margin: 0 0 0.15rem;
+}
+
+.proj-colabs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.proj-colab-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+  align-items: end;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.proj-colab-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.proj-colab-field span {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+.proj-colab-field input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  background: #fff;
+  width: 100%;
+}
+
+.proj-colab-remove {
+  align-self: end;
+  min-width: 2rem;
+  padding-inline: 0.45rem;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .update-feed {

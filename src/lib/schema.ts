@@ -9,6 +9,7 @@ import {
   type Projeto,
 } from "./types";
 import { normalizeProjetoLinks } from "./projeto-links";
+import { normalizeProjetoColaboradores } from "./projeto-colaboradores";
 
 export function emptyMeta(): Meta {
   return {
@@ -50,7 +51,11 @@ export function ensureProjetos(data: unknown): Projeto[] {
   if (!Array.isArray(data)) return [];
   return data.map((item) => {
     const p = item as Projeto;
-    return { ...p, links: normalizeProjetoLinks(p.links) };
+    return {
+      ...p,
+      links: normalizeProjetoLinks(p.links),
+      colaboradores: normalizeProjetoColaboradores(p.colaboradores),
+    };
   });
 }
 

@@ -35,6 +35,11 @@ export function buildProjetoReport(projeto: Projeto): string {
     `| Status | ${statusLabel(projeto.status)} |`,
     `| KR | ${projeto.kr || "—"} |`,
     `| Papel | ${projeto.papel} |`,
+    `| Colaboradores | ${
+      projeto.colaboradores?.length
+        ? projeto.colaboradores.map((c) => c.nome).join(", ")
+        : "—"
+    } |`,
     `| Período | ${projeto.periodo || "—"} |`,
     `| Destaque | ${projeto.destaque ? "Sim" : "Não"} |`,
     "",

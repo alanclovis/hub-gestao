@@ -28,6 +28,12 @@ import { MentionInput } from "@/components/mention-input";
 import { MentionText } from "@/components/mention-text";
 import { normalizeProjetoLinks, sanitizeProjetoLinks } from "@/lib/projeto-links";
 import {
+  colaboradoresSummary,
+  normalizeProjetoColaboradores,
+  sanitizeProjetoColaboradores,
+} from "@/lib/projeto-colaboradores";
+import { ProjetoColaboradoresEditor } from "@/components/projeto-colaboradores-editor";
+import {
   ProjetoLinksEditor,
 } from "@/components/projeto-links-editor";
 import {
@@ -65,6 +71,9 @@ function SortableCard({
       <MentionText as="h3" text={projeto.titulo || "Sem título"} />
       <p className="meta">
         {projeto.kr || "Sem KR"} · {projeto.papel}
+        {colaboradoresSummary(projeto.colaboradores)
+          ? ` · ${colaboradoresSummary(projeto.colaboradores)}`
+          : ""}
       </p>
     </article>
   );
@@ -131,6 +140,7 @@ function newProjeto(): Projeto {
     impacto: "",
     descricao: "",
     links: [],
+    colaboradores: [],
     destaque: false,
     updates: [],
     createdAt: now,
@@ -163,6 +173,7 @@ function ProjectDrawer({
     ...initial,
     updates: initial.updates.map((u) => ({ ...u })),
     links: normalizeProjetoLinks(initial.links),
+    colaboradores: normalizeProjetoColaboradores(initial.colaboradores),
   }));
   const [dirty, setDirty] = useState(false);
   const [updateDraft, setUpdateDraft] = useState<ProjetoUpdate>(emptyUpdateDraft);
@@ -232,6 +243,7 @@ function ProjectDrawer({
     const stamped = {
       ...local,
       links: sanitizeProjetoLinks(local.links),
+      colaboradores: sanitizeProjetoColaboradores(local.colaboradores),
       updatedAt: new Date().toISOString(),
     };
     const prevIds = new Set(initial.updates.map((u) => u.id));
@@ -272,86 +284,109 @@ function ProjectDrawer({
         </div>
 
         <div className="drawer-scroll">
-          <div className="field">
-            <label>Título</label>
-            <input
-              value={local.titulo}
-              onChange={(e) => patchLocal({ titulo: e.target.value })}
-            />
-          </div>
-          <MentionInput
-            label="Descrição e contexto"
-            value={local.descricao}
-            people={people}
-            multiline
-            rows={2}
-            onChange={(v) => patchLocal({ descricao: v })}
-          />
-          <div className="field-row">
+          <section className="drawer-section">
             <div className="field">
-              <label>Status</label>
-              <select
-                value={local.status}
-                onChange={(e) =>
-                  patchLocal({ status: e.target.value as ProjetoStatus })
-                }
-              >
-                {STATUS_COLUMNS.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label>Papel</label>
-              <select
-                value={local.papel}
-                onChange={(e) =>
-                  patchLocal({ papel: e.target.value as Projeto["papel"] })
-                }
-              >
-                {PAPEIS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="field">
-            <label>KR relacionado</label>
-            <input
-              value={local.kr}
-              onChange={(e) => patchLocal({ kr: e.target.value })}
-              placeholder="KR 1.1 — Data Labeling"
-            />
-          </div>
-          <div className="field-row">
-            <div className="field">
-              <label>Período</label>
+              <label>Título</label>
               <input
-                value={local.periodo}
-                onChange={(e) => patchLocal({ periodo: e.target.value })}
-                placeholder="Abr/26 —"
+                value={local.titulo}
+                onChange={(e) => patchLocal({ titulo: e.target.value })}
               />
             </div>
-          </div>
-          <div className="field">
-            <label>Links</label>
+            <MentionInput
+              label="Descrição e contexto"
+              value={local.descricao}
+              people={people}
+              multiline
+              rows={3}
+              onChange={(v) => patchLocal({ descricao: v })}
+            />
+          </section>
+
+          <section className="drawer-section">
+            <h3 className="drawer-section-title">Detalhes</h3>
+            <div className="field-row">
+              <div className="field">
+                <label>Status</label>
+                <select
+                  value={local.status}
+                  onChange={(e) =>
+                    patchLocal({ status: e.target.value as ProjetoStatus })
+                  }
+                >
+                  {STATUS_COLUMNS.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label>Meu papel</label>
+                <select
+                  value={local.papel}
+                  onChange={(e) =>
+                    patchLocal({ papel: e.target.value as Projeto["papel"] })
+                  }
+                >
+                  {PAPEIS.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="field-row">
+              <div className="field">
+                <label>KR relacionado</label>
+                <input
+                  value={local.kr}
+                  onChange={(e) => patchLocal({ kr: e.target.value })}
+                  placeholder="KR 1.1 — Data Labeling"
+                />
+              </div>
+              <div className="field">
+                <label>Período</label>
+                <input
+                  value={local.periodo}
+                  onChange={(e) => patchLocal({ periodo: e.target.value })}
+                  placeholder="Abr/26 —"
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="drawer-section">
+            <h3 className="drawer-section-title">Equipe</h3>
+            <p className="empty-hint drawer-section-hint">
+              Seu papel acima; adicione quem mais participa do projeto.
+            </p>
+            <ProjetoColaboradoresEditor
+              colaboradores={local.colaboradores}
+              people={people}
+              onChange={(colaboradores) => patchLocal({ colaboradores })}
+            />
+          </section>
+
+          <section className="drawer-section">
+            <h3 className="drawer-section-title">Links</h3>
             <ProjetoLinksEditor
               links={local.links}
               onChange={(links) => patchLocal({ links })}
             />
-          </div>
-          <MentionInput
-            label="Impacto / resultado"
-            value={local.impacto}
-            people={people}
-            multiline
-            rows={2}
-            onChange={(v) => patchLocal({ impacto: v })}
-          />
+          </section>
+
+          <section className="drawer-section">
+            <h3 className="drawer-section-title">Impacto</h3>
+            <MentionInput
+              label="Impacto / resultado"
+              value={local.impacto}
+              people={people}
+              multiline
+              rows={3}
+              onChange={(v) => patchLocal({ impacto: v })}
+            />
+          </section>
 
           <div className="update-feed">
             <h3>{editingId ? "Editando update" : "Novo update"}</h3>
@@ -652,6 +687,7 @@ export function ProjetosBoard({
         ...p,
         updates: p.updates.map((u) => ({ ...u })),
         links: normalizeProjetoLinks(p.links),
+        colaboradores: normalizeProjetoColaboradores(p.colaboradores),
       },
       isNew: false,
     });

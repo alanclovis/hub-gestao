@@ -68,6 +68,7 @@ export function collectPeople(data: {
   });
 
   (data.projetos ?? []).forEach((p) => {
+    (p.colaboradores ?? []).forEach((c) => remember(map, c.nome));
     extractMentions(p.titulo).forEach((m) => remember(map, m));
     extractMentions(p.descricao).forEach((m) => remember(map, m));
     extractMentions(p.impacto).forEach((m) => remember(map, m));
@@ -151,13 +152,16 @@ export function findPersonHits(
   });
 
   (data.projetos ?? []).forEach((p) => {
+    const isColab = (p.colaboradores ?? []).some((c) =>
+      isSamePerson(c.nome, person),
+    );
     const projText = [p.titulo, p.descricao, p.impacto].join(" ");
-    if (textMentionsPerson(projText, person)) {
+    if (isColab || textMentionsPerson(projText, person)) {
       hits.push({
         id: `pj-${p.id}`,
         kind: "projeto",
         titulo: p.titulo || "Projeto",
-        detalhe: "Projeto",
+        detalhe: isColab ? "Colaborador" : "Projeto",
         data: p.updatedAt.slice(0, 10),
         href: "/projetos/",
       });

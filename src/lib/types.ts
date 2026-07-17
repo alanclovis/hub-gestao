@@ -26,6 +26,11 @@ export interface ProjetoLink {
   url: string;
 }
 
+export interface ProjetoColaborador {
+  id: string;
+  nome: string;
+}
+
 export interface Projeto {
   id: string;
   titulo: string;
@@ -36,6 +41,7 @@ export interface Projeto {
   impacto: string;
   descricao: string;
   links: ProjetoLink[];
+  colaboradores: ProjetoColaborador[];
   destaque: boolean;
   updates: ProjetoUpdate[];
   createdAt: string;
