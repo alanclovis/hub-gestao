@@ -69,10 +69,10 @@ export function buildProjetoReport(projeto: Projeto): string {
   } else {
     updates.forEach((u) => {
       linhas.push(`### ${u.date}`, "");
-      if (u.oQueFiz) linhas.push(`- **O que fiz:** ${u.oQueFiz}`);
-      if (u.decisao) linhas.push(`- **Decisão / mudança:** ${u.decisao}`);
-      if (u.evidencia) linhas.push(`- **Evidência:** ${u.evidencia}`);
-      if (u.resultado) linhas.push(`- **Resultado parcial:** ${u.resultado}`);
+      if (u.oQueFiz) linhas.push(u.oQueFiz);
+      if (u.decisao) linhas.push(`- Decisão: ${u.decisao}`);
+      if (u.evidencia) linhas.push(`- Evidência: ${u.evidencia}`);
+      if (u.resultado) linhas.push(`- Resultado: ${u.resultado}`);
       linhas.push("");
     });
   }

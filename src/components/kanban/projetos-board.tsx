@@ -199,7 +199,7 @@ function ProjectDrawer({
 
   const saveUpdateToLocal = () => {
     if (!updateDraft.oQueFiz.trim()) {
-      window.alert('Preencha "O que fiz" antes de adicionar o update.');
+      window.alert('Preencha "O que mudou" antes de incluir.');
       return;
     }
     if (editingId) {
@@ -388,70 +388,47 @@ function ProjectDrawer({
             />
           </section>
 
-          <div className="update-feed">
-            <h3>{editingId ? "Editando update" : "Novo update"}</h3>
-            <p className="empty-hint" style={{ marginTop: 0 }}>
-              Inclua updates e clique em Salvar no rodapé para gravar.
-            </p>
-            <div className="field">
-              <label>Data</label>
-              <input
-                type="date"
-                value={updateDraft.date}
-                onChange={(e) =>
-                  setUpdateDraft({ ...updateDraft, date: e.target.value })
-                }
-              />
-            </div>
-            <MentionInput
-              label="O que fiz"
-              value={updateDraft.oQueFiz}
-              people={people}
-              multiline
-              rows={2}
-              onChange={(v) => setUpdateDraft({ ...updateDraft, oQueFiz: v })}
-            />
-            <div className="field-group">
-              <p className="field-group-title">Detalhe do update</p>
+          <section className="update-feed">
+            <h3 className="drawer-section-title">
+              Updates{local.updates.length ? ` (${local.updates.length})` : ""}
+            </h3>
+            <div className="update-compose">
+              <div className="update-compose-row">
+                <label className="update-date-field">
+                  <span>Data</span>
+                  <input
+                    type="date"
+                    value={updateDraft.date}
+                    onChange={(e) =>
+                      setUpdateDraft({ ...updateDraft, date: e.target.value })
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="hub-primary-btn"
+                  onClick={saveUpdateToLocal}
+                >
+                  {editingId ? "Aplicar" : "Incluir"}
+                </button>
+              </div>
               <MentionInput
-                label="Decisão / mudança"
-                value={updateDraft.decisao}
+                label="O que mudou"
+                value={updateDraft.oQueFiz}
                 people={people}
-                onChange={(v) => setUpdateDraft({ ...updateDraft, decisao: v })}
+                multiline
+                rows={3}
+                placeholder="Ex.: subi a planilha de calibração e alinhei com o time"
+                onChange={(v) => setUpdateDraft({ ...updateDraft, oQueFiz: v })}
               />
-              <MentionInput
-                label="Evidência"
-                value={updateDraft.evidencia}
-                people={people}
-                onChange={(v) =>
-                  setUpdateDraft({ ...updateDraft, evidencia: v })
-                }
-              />
-              <MentionInput
-                label="Resultado parcial"
-                value={updateDraft.resultado}
-                people={people}
-                onChange={(v) =>
-                  setUpdateDraft({ ...updateDraft, resultado: v })
-                }
-              />
-            </div>
-            <div className="drawer-actions drawer-actions-inline">
-              <button
-                type="button"
-                className="hub-primary-btn"
-                onClick={saveUpdateToLocal}
-              >
-                {editingId ? "Aplicar update" : "Incluir update"}
-              </button>
               {editingId ? (
-                <>
+                <div className="drawer-actions drawer-actions-inline">
                   <button
                     type="button"
                     className="hub-secondary-btn"
                     onClick={clearUpdateForm}
                   >
-                    Cancelar
+                    Cancelar edição
                   </button>
                   <button
                     type="button"
@@ -460,46 +437,44 @@ function ProjectDrawer({
                   >
                     Excluir update
                   </button>
-                </>
-              ) : null}
+                </div>
+              ) : (
+                <p className="empty-hint update-compose-hint">
+                  Inclua na lista e clique em Salvar no rodapé para gravar no Gist.
+                </p>
+              )}
             </div>
 
-            {local.updates.map((u) => (
-              <button
-                type="button"
-                key={u.id}
-                className={`update-item update-item-btn${editingId === u.id ? " is-editing" : ""}`}
-                onClick={() => startEdit(u)}
-              >
-                <div className="date">
-                  {u.date}
-                  <span className="muted"> · clique para editar</span>
-                </div>
-                <div>
-                  <strong>O que fiz:</strong>{" "}
-                  <MentionText text={u.oQueFiz} />
-                </div>
-                {u.decisao ? (
-                  <div>
-                    <strong>Decisão:</strong>{" "}
-                    <MentionText text={u.decisao} />
-                  </div>
-                ) : null}
-                {u.evidencia ? (
-                  <div>
-                    <strong>Evidência:</strong>{" "}
-                    <MentionText text={u.evidencia} />
-                  </div>
-                ) : null}
-                {u.resultado ? (
-                  <div>
-                    <strong>Resultado:</strong>{" "}
-                    <MentionText text={u.resultado} />
-                  </div>
-                ) : null}
-              </button>
-            ))}
-          </div>
+            {local.updates.length === 0 ? (
+              <p className="empty-hint">Nenhum update ainda.</p>
+            ) : (
+              <ul className="update-list">
+                {local.updates.map((u) => (
+                  <li key={u.id}>
+                    <button
+                      type="button"
+                      className={`update-item update-item-btn${editingId === u.id ? " is-editing" : ""}`}
+                      onClick={() => startEdit(u)}
+                    >
+                      <span className="update-item-date">{u.date}</span>
+                      <MentionText text={u.oQueFiz || "Sem descrição"} />
+                      {u.decisao || u.evidencia || u.resultado ? (
+                        <span className="update-item-legacy muted">
+                          {[
+                            u.decisao ? `Decisão: ${u.decisao}` : "",
+                            u.evidencia ? `Evidência: ${u.evidencia}` : "",
+                            u.resultado ? `Resultado: ${u.resultado}` : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           {!isNew ? (
             <div style={{ marginTop: "1rem" }}>

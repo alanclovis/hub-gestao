@@ -1156,15 +1156,72 @@ select {
 }
 
 .update-feed {
-  margin-top: 1.2rem;
-  border-top: 1px solid var(--line);
-  padding-top: 1rem;
+  margin-top: 0.35rem;
+  padding-top: 0;
+  border-top: 0;
 }
 
-.update-feed h3 {
-  margin: 0 0 0.75rem;
-  font-family: var(--font-display), serif;
-  font-size: 1.1rem;
+.update-compose {
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(23, 33, 43, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  margin-bottom: 0.85rem;
+}
+
+.update-compose-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+}
+
+.update-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.update-date-field span {
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+.update-date-field input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  background: #fff;
+}
+
+.update-compose-hint {
+  margin: 0.55rem 0 0;
+}
+
+.update-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.update-item-date {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: var(--teal-soft);
+  color: var(--teal-deep);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.update-item-legacy {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 .update-item {
@@ -1465,9 +1522,9 @@ select {
   text-align: left;
   cursor: pointer;
   background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  padding: 0.7rem 0;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.75rem 0.65rem;
   color: inherit;
   font: inherit;
 }
