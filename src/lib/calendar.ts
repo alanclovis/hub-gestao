@@ -1,4 +1,5 @@
 import { formatMinutes, type MonitoriaRow } from "./monitorias";
+import { pendenciaPrioridadeLabel, pendenciaPrioridadeOrDefault } from "./pendencia-sync";
 import type { Atividade, CollectionMap, Projeto } from "./types";
 
 export type CalendarKind =
@@ -143,11 +144,15 @@ export function buildCalendarEvents(
 
   data.pendencias.forEach((p) => {
     if (!p.prazo) return;
+    const prio = pendenciaPrioridadeLabel(pendenciaPrioridadeOrDefault(p));
     events.push({
       id: `p-${p.id}`,
       date: p.prazo,
       titulo: p.titulo || "Pendência",
-      subtitle: p.status === "feita" ? "Concluída" : "Prazo",
+      subtitle:
+        p.status === "feita"
+          ? `Concluída · ${prio}`
+          : `Prazo · ${prio}`,
       kind: "pendencia",
       href: "/pendencias/",
     });

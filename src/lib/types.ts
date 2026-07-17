@@ -75,10 +75,22 @@ export interface Feedback {
 
 export type PendenciaStatus = "aberta" | "feita";
 
+export type PendenciaPrioridade = "alta" | "media" | "baixa";
+
+export const PENDENCIA_PRIORIDADES: {
+  id: PendenciaPrioridade;
+  label: string;
+}[] = [
+  { id: "alta", label: "Alta" },
+  { id: "media", label: "Média" },
+  { id: "baixa", label: "Baixa" },
+];
+
 export interface Pendencia {
   id: string;
   titulo: string;
   status: PendenciaStatus;
+  prioridade?: PendenciaPrioridade;
   prazo?: string;
   notas: string;
   projetoId?: string;

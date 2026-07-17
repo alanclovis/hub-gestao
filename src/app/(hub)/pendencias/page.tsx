@@ -4,8 +4,14 @@ import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
-import { completePendenciaAsAtividade } from "@/lib/pendencia-sync";
-import type { Pendencia, PendenciaStatus } from "@/lib/types";
+import {
+  comparePendenciasByPriorityAndPrazo,
+  completePendenciaAsAtividade,
+  pendenciaPrioridadeLabel,
+  pendenciaPrioridadeOrDefault,
+} from "@/lib/pendencia-sync";
+import type { Pendencia, PendenciaPrioridade, PendenciaStatus } from "@/lib/types";
+import { PENDENCIA_PRIORIDADES } from "@/lib/types";
 
 function emptyPendencia(): Pendencia {
   const now = new Date().toISOString();
@@ -13,6 +19,7 @@ function emptyPendencia(): Pendencia {
     id: nanoid(),
     titulo: "",
     status: "aberta",
+    prioridade: "media",
     prazo: "",
     notas: "",
     createdAt: now,
@@ -55,9 +62,7 @@ export default function PendenciasPage() {
   const saveError = error || errorP || errorA;
 
   const items = useMemo(() => {
-    const list = [...(data ?? [])].sort((a, b) =>
-      (a.prazo || "9999").localeCompare(b.prazo || "9999"),
-    );
+    const list = [...(data ?? [])].sort(comparePendenciasByPriorityAndPrazo);
     if (filtroStatus === "todas") return list;
     return list.filter((p) => p.status === filtroStatus);
   }, [data, filtroStatus]);
@@ -201,17 +206,26 @@ export default function PendenciasPage() {
         <p className="empty-hint">Nada por aqui.</p>
       ) : (
         <div className="list-stack">
-          {items.map((p) => (
+          {items.map((p) => {
+            const prioridade = pendenciaPrioridadeOrDefault(p);
+            return (
             <div
               key={p.id}
-              className={`list-item list-item-row${p.status === "feita" ? " is-done" : ""}`}
+              className={`list-item list-item-row pend-priority-border--${prioridade}${p.status === "feita" ? " is-done" : ""}`}
             >
               <button
                 type="button"
                 className="list-item-main"
                 onClick={() => openExisting(p)}
               >
-                <h3>{p.titulo || "Sem título"}</h3>
+                <h3>
+                  <span
+                    className={`pend-priority-badge pend-priority-badge--${prioridade}`}
+                  >
+                    {pendenciaPrioridadeLabel(prioridade)}
+                  </span>
+                  {p.titulo || "Sem título"}
+                </h3>
                 <p className="meta">
                   {p.status === "aberta" ? "Aberta" : "Concluída"}
                   {p.prazo ? ` · prazo ${p.prazo}` : ""}
@@ -236,7 +250,8 @@ export default function PendenciasPage() {
                 </button>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -257,6 +272,23 @@ export default function PendenciasPage() {
                   value={draft.titulo}
                   onChange={(e) => patchDraft({ titulo: e.target.value })}
                 />
+              </div>
+              <div className="field">
+                <label>Prioridade</label>
+                <select
+                  value={draft.prioridade ?? "media"}
+                  onChange={(e) =>
+                    patchDraft({
+                      prioridade: e.target.value as PendenciaPrioridade,
+                    })
+                  }
+                >
+                  {PENDENCIA_PRIORIDADES.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="field">
                 <label>Prazo</label>

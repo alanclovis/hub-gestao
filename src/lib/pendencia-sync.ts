@@ -1,6 +1,39 @@
 import { nanoid } from "nanoid";
 import { syncAtividadeIntoProjetos } from "./atividade-sync";
-import type { Atividade, Pendencia, Projeto } from "./types";
+import type {
+  Atividade,
+  Pendencia,
+  PendenciaPrioridade,
+  Projeto,
+} from "./types";
+
+const PRIORITY_ORDER: Record<PendenciaPrioridade, number> = {
+  alta: 0,
+  media: 1,
+  baixa: 2,
+};
+
+export function pendenciaPrioridadeOrDefault(
+  p: Pendencia,
+): PendenciaPrioridade {
+  return p.prioridade ?? "media";
+}
+
+export function pendenciaPrioridadeLabel(prioridade: PendenciaPrioridade): string {
+  if (prioridade === "alta") return "Alta";
+  if (prioridade === "baixa") return "Baixa";
+  return "Média";
+}
+
+export function comparePendenciasByPriorityAndPrazo(
+  a: Pendencia,
+  b: Pendencia,
+): number {
+  const pa = PRIORITY_ORDER[pendenciaPrioridadeOrDefault(a)];
+  const pb = PRIORITY_ORDER[pendenciaPrioridadeOrDefault(b)];
+  if (pa !== pb) return pa - pb;
+  return (a.prazo || "9999").localeCompare(b.prazo || "9999");
+}
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);

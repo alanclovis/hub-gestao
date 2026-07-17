@@ -1193,11 +1193,54 @@ select {
   margin: 0 0 0.25rem;
   font-size: 1rem;
   font-family: var(--font-display), serif;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .pend-done-btn {
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.pend-priority-badge {
+  display: inline-block;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-family: var(--font-body), sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.pend-priority-badge--alta {
+  background: color-mix(in srgb, var(--danger) 14%, #fff);
+  color: var(--danger);
+}
+
+.pend-priority-badge--media {
+  background: color-mix(in srgb, var(--highlight) 22%, #fff);
+  color: #8a6200;
+}
+
+.pend-priority-badge--baixa {
+  background: color-mix(in srgb, var(--accent) 12%, #fff);
+  color: var(--accent);
+}
+
+.list-item-row.pend-priority-border--alta:not(.is-done) {
+  border-left-color: var(--danger);
+}
+
+.list-item-row.pend-priority-border--media:not(.is-done) {
+  border-left-color: var(--highlight);
+}
+
+.list-item-row.pend-priority-border--baixa:not(.is-done) {
+  border-left-color: var(--accent);
 }
 
 .login-screen {
