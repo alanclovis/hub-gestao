@@ -1430,16 +1430,29 @@ select {
   color: var(--accent);
 }
 
-.list-item-row.pend-priority-border--alta:not(.is-done) {
+.list-item-row.pend-priority-border--alta:not(.is-done):not(.is-atrasada) {
   border-left-color: var(--danger);
 }
 
-.list-item-row.pend-priority-border--media:not(.is-done) {
+.list-item-row.pend-priority-border--media:not(.is-done):not(.is-atrasada) {
   border-left-color: var(--highlight);
 }
 
-.list-item-row.pend-priority-border--baixa:not(.is-done) {
+.list-item-row.pend-priority-border--baixa:not(.is-done):not(.is-atrasada) {
   border-left-color: var(--accent);
+}
+
+.list-item-row.is-atrasada:not(.is-done) {
+  border-left-color: var(--danger);
+}
+
+.pend-priority-badge--atrasada {
+  background: color-mix(in srgb, var(--danger) 14%, #fff);
+  color: var(--danger);
+}
+
+.pend-resumo {
+  margin: -0.35rem 0 0.85rem;
 }
 
 .login-screen {

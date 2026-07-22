@@ -5,12 +5,17 @@ import { nanoid } from "nanoid";
 import { SaveBadge } from "@/components/save-badge";
 import { useCollection } from "@/hooks/use-collection";
 import {
-  comparePendenciasByPriorityAndPrazo,
+  comparePendenciasByUrgency,
   completePendenciaAsAtividade,
+  formatPendenciaPrazoRelativo,
+  isPendenciaAtrasada,
+  matchesPendenciaFiltro,
   pendenciaPrioridadeLabel,
   pendenciaPrioridadeOrDefault,
+  summarizePendenciasAbertas,
+  type PendenciaFiltro,
 } from "@/lib/pendencia-sync";
-import type { Pendencia, PendenciaPrioridade, PendenciaStatus } from "@/lib/types";
+import type { Pendencia, PendenciaPrioridade } from "@/lib/types";
 import { PENDENCIA_PRIORIDADES } from "@/lib/types";
 
 function emptyPendencia(): Pendencia {
@@ -45,9 +50,7 @@ export default function PendenciasPage() {
   const [draft, setDraft] = useState<Pendencia | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [filtroStatus, setFiltroStatus] = useState<"todas" | PendenciaStatus>(
-    "aberta",
-  );
+  const [filtro, setFiltro] = useState<PendenciaFiltro>("aberta");
 
   const saveStatus =
     status === "error" || statusP === "error" || statusA === "error"
@@ -61,11 +64,17 @@ export default function PendenciasPage() {
             : "idle";
   const saveError = error || errorP || errorA;
 
+  const resumo = useMemo(
+    () => summarizePendenciasAbertas(data ?? []),
+    [data],
+  );
+
   const items = useMemo(() => {
-    const list = [...(data ?? [])].sort(comparePendenciasByPriorityAndPrazo);
-    if (filtroStatus === "todas") return list;
-    return list.filter((p) => p.status === filtroStatus);
-  }, [data, filtroStatus]);
+    const list = [...(data ?? [])]
+      .filter((p) => matchesPendenciaFiltro(p, filtro))
+      .sort(comparePendenciasByUrgency);
+    return list;
+  }, [data, filtro]);
 
   const projetoTitulo = (id?: string) =>
     projetos?.find((p) => p.id === id)?.titulo ?? "projeto";
@@ -186,12 +195,12 @@ export default function PendenciasPage() {
       <div className="list-toolbar">
         <select
           className="list-filter list-filter-sm"
-          value={filtroStatus}
-          onChange={(e) =>
-            setFiltroStatus(e.target.value as "todas" | PendenciaStatus)
-          }
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value as PendenciaFiltro)}
         >
           <option value="aberta">Abertas</option>
+          <option value="atrasada">Atrasadas</option>
+          <option value="hoje">Vence hoje</option>
           <option value="feita">Feitas</option>
           <option value="todas">Todas</option>
         </select>
@@ -199,6 +208,19 @@ export default function PendenciasPage() {
           + Nova pendência
         </button>
       </div>
+
+      {data && resumo.total > 0 ? (
+        <p className="pend-resumo empty-hint">
+          {[
+            resumo.atrasadas ? `${resumo.atrasadas} atrasada${resumo.atrasadas === 1 ? "" : "s"}` : "",
+            resumo.hoje ? `${resumo.hoje} vence hoje` : "",
+            resumo.futuras ? `${resumo.futuras} futura${resumo.futuras === 1 ? "" : "s"}` : "",
+            resumo.semPrazo ? `${resumo.semPrazo} sem prazo` : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      ) : null}
 
       {data === null || projetos === null || atividades === null ? (
         <p className="empty-hint">Carregando…</p>
@@ -208,10 +230,11 @@ export default function PendenciasPage() {
         <div className="list-stack">
           {items.map((p) => {
             const prioridade = pendenciaPrioridadeOrDefault(p);
+            const atrasada = isPendenciaAtrasada(p);
             return (
             <div
               key={p.id}
-              className={`list-item list-item-row pend-priority-border--${prioridade}${p.status === "feita" ? " is-done" : ""}`}
+              className={`list-item list-item-row pend-priority-border--${prioridade}${atrasada ? " is-atrasada" : ""}${p.status === "feita" ? " is-done" : ""}`}
             >
               <button
                 type="button"
@@ -224,11 +247,20 @@ export default function PendenciasPage() {
                   >
                     {pendenciaPrioridadeLabel(prioridade)}
                   </span>
+                  {atrasada ? (
+                    <span className="pend-priority-badge pend-priority-badge--atrasada">
+                      Atrasada
+                    </span>
+                  ) : null}
                   {p.titulo || "Sem título"}
                 </h3>
                 <p className="meta">
                   {p.status === "aberta" ? "Aberta" : "Concluída"}
-                  {p.prazo ? ` · prazo ${p.prazo}` : ""}
+                  {p.status === "aberta"
+                    ? ` · ${formatPendenciaPrazoRelativo(p.prazo)}`
+                    : p.prazo
+                      ? ` · prazo ${p.prazo}`
+                      : ""}
                   {p.projetoId ? ` · ${projetoTitulo(p.projetoId)}` : ""}
                 </p>
               </button>
