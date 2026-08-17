@@ -11,6 +11,7 @@ import {
 import {
   clearToken,
   getToken,
+  sanitizeToken,
   setToken,
   validateToken,
 } from "@/lib/token";
@@ -48,9 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loginWithToken = useCallback(async (raw: string) => {
-    const u = await validateToken(raw.trim());
-    setToken(raw.trim());
-    setTokenState(raw.trim());
+    const cleaned = sanitizeToken(raw);
+    const u = await validateToken(cleaned);
+    setToken(cleaned);
+    setTokenState(cleaned);
     setUser(u);
   }, []);
 

@@ -43,9 +43,8 @@ export default function LoginPage() {
         <h1>BF</h1>
         <p>
           Seu best friend de gestão. Sem Vercel: use um{" "}
-          <strong>Personal Access Token</strong> do GitHub com permissão{" "}
-          <code>gist</code>. Os dados ficam no seu Gist privado — acessível de
-          qualquer PC pelo GitHub Pages.
+          <strong>Personal Access Token (classic)</strong> do GitHub com
+          permissão <code>gist</code>. Os dados ficam no seu Gist privado.
         </p>
         <ol
           style={{
@@ -64,11 +63,11 @@ export default function LoginPage() {
               rel="noreferrer"
               style={{ color: "var(--teal)", textDecoration: "underline" }}
             >
-              criar token
+              criar token classic
             </a>{" "}
-            (scope <code>gist</code>)
+            (marque só <code>gist</code> — não use fine-grained)
           </li>
-          <li>Copie o token e cole abaixo</li>
+          <li>Copie o token completo (começa com <code>ghp_</code>)</li>
           <li>Ele fica só neste navegador (localStorage)</li>
         </ol>
         <form onSubmit={onSubmit} style={{ marginTop: "1.25rem" }}>

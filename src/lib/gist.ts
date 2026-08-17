@@ -36,17 +36,35 @@ async function gh<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(`${GH_API}${path}`, {
-    ...init,
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-    cache: "no-store",
-  });
+  const method = (init?.method ?? "GET").toUpperCase();
+  const hasBody = init?.body != null;
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    Authorization: `Bearer ${token}`,
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+  // Só envia Content-Type com body — evita preflight desnecessário no browser.
+  if (hasBody || method !== "GET") {
+    headers["Content-Type"] = "application/json";
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${GH_API}${path}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
+  } catch (err) {
+    if (err instanceof TypeError) {
+      throw new Error(
+        "Não foi possível falar com a API do GitHub (Failed to fetch). " +
+          "Verifique internet, VPN/firewall ou bloqueador que impeça api.github.com.",
+      );
+    }
+    throw err;
+  }
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`GitHub API ${res.status}: ${text}`);
