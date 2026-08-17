@@ -1,12 +1,11 @@
 import { defaultCollections, fileNameFor, parseCollection } from "./schema";
+import { githubApiUrl } from "./github-api";
 import {
   GIST_DESCRIPTION,
   SCHEMA_VERSION,
   type CollectionMap,
   type CollectionName,
 } from "./types";
-
-const GH_API = "https://api.github.com";
 
 type GistFile = { content?: string; filename?: string };
 type GistResponse = {
@@ -42,15 +41,13 @@ async function gh<T>(
     Authorization: `Bearer ${token}`,
     ...(init?.headers as Record<string, string> | undefined),
   };
-  // Content-Type só com body (permitido no CORS do GitHub).
-  // Não enviar Accept / X-GitHub-Api-Version — quebram preflight no browser.
   if (hasBody || (method !== "GET" && method !== "HEAD")) {
     headers["Content-Type"] = "application/json";
   }
 
   let res: Response;
   try {
-    res = await fetch(`${GH_API}${path}`, {
+    res = await fetch(githubApiUrl(path), {
       ...init,
       headers,
       cache: "no-store",
@@ -59,7 +56,7 @@ async function gh<T>(
     if (err instanceof TypeError) {
       throw new Error(
         "Não foi possível falar com a API do GitHub (Failed to fetch). " +
-          "Isso costuma ser rede/VPN/firewall/bloqueador — teste outra rede ou desative VPN/adblock.",
+          "Pode ser outage (githubstatus.com) ou rede/VPN. Na corporativa: npm run local",
       );
     }
     throw err;
@@ -67,6 +64,11 @@ async function gh<T>(
 
   if (!res.ok) {
     const text = await res.text();
+    if (res.status >= 500) {
+      throw new Error(
+        `API do GitHub instável (HTTP ${res.status}). Veja https://www.githubstatus.com`,
+      );
+    }
     throw new Error(`GitHub API ${res.status}: ${text}`);
   }
   if (res.status === 204) {

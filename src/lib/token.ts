@@ -1,3 +1,5 @@
+import { githubApiUrl } from "./github-api";
+
 const TOKEN_KEY = "hub-gestao-github-token";
 
 export function getToken(): string | null {
@@ -22,22 +24,28 @@ function friendlyFetchError(err: unknown): Error {
   if (err instanceof TypeError) {
     return new Error(
       "Não foi possível falar com a API do GitHub (Failed to fetch). " +
-        "Isso costuma ser rede/VPN/firewall/bloqueador — não o token em si. " +
-        "Teste em outra rede (ex.: hotspot do celular) ou desative VPN/adblock.",
+        "Pode ser outage (githubstatus.com), VPN/firewall ou bloqueador. " +
+        "Na rede corporativa, rode localmente: npm run local",
     );
   }
   if (err instanceof Error) return err;
   return new Error("Falha ao validar o token.");
 }
 
-/** Ping sem token — só para diagnosticar se api.github.com responde no browser. */
+/** Ping sem token — só para diagnosticar se a API responde neste browser. */
 export async function probeGitHubApi(): Promise<{ ok: boolean; detail: string }> {
   try {
-    const res = await fetch("https://api.github.com/", {
+    const res = await fetch(githubApiUrl("/"), {
       method: "GET",
       cache: "no-store",
     });
-    if (!res.ok) {
+    if (res.status >= 500) {
+      return {
+        ok: false,
+        detail: `API instável (HTTP ${res.status}). Veja githubstatus.com`,
+      };
+    }
+    if (!res.ok && res.status !== 401 && res.status !== 403) {
       return { ok: false, detail: `API respondeu HTTP ${res.status}` };
     }
     return { ok: true, detail: "API alcançável neste navegador" };
@@ -46,7 +54,7 @@ export async function probeGitHubApi(): Promise<{ ok: boolean; detail: string }>
       ok: false,
       detail:
         err instanceof TypeError
-          ? "Browser bloqueou api.github.com (CORS/rede/VPN/adblock)"
+          ? "Browser não alcança a API (rede/VPN/adblock ou outage). Tente npm run local"
           : err instanceof Error
             ? err.message
             : "Falha desconhecida",
@@ -75,8 +83,7 @@ export async function validateToken(token: string): Promise<{
 
   let res: Response;
   try {
-    // Só Authorization — Accept/X-GitHub-Api-Version quebram CORS no browser.
-    res = await fetch("https://api.github.com/user", {
+    res = await fetch(githubApiUrl("/user"), {
       headers: {
         Authorization: `Bearer ${cleaned}`,
       },
@@ -94,6 +101,11 @@ export async function validateToken(token: string): Promise<{
   if (res.status === 403) {
     throw new Error(
       "Acesso negado (403). Confira SSO da organização ou se o token tem scope gist.",
+    );
+  }
+  if (res.status >= 500) {
+    throw new Error(
+      `API do GitHub instável (HTTP ${res.status}). Veja https://www.githubstatus.com e tente de novo.`,
     );
   }
   if (!res.ok) {

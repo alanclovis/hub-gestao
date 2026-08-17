@@ -107,7 +107,7 @@ export default function LoginPage() {
           }}
         >
           {probing
-            ? "Testando conexão com api.github.com…"
+            ? "Testando conexão com a API…"
             : probe
               ? probe.ok
                 ? `✓ ${probe.detail}`
@@ -127,6 +127,25 @@ export default function LoginPage() {
             </>
           ) : null}
         </p>
+        {probe && !probe.ok ? (
+          <p
+            className="empty-hint"
+            style={{ textAlign: "left", marginTop: "0.5rem" }}
+          >
+            Se a API estiver fora:{" "}
+            <a
+              href="https://www.githubstatus.com"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--teal)", textDecoration: "underline" }}
+            >
+              githubstatus.com
+            </a>
+            . Na rede corporativa, no terminal do projeto:{" "}
+            <code>npm run local</code> e abra{" "}
+            <code>http://localhost:4173</code>.
+          </p>
+        ) : null}
 
         <form onSubmit={onSubmit} style={{ marginTop: "1.25rem" }}>
           <div className="field" style={{ textAlign: "left" }}>

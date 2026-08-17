@@ -6,6 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "local": "npm run build && node scripts/local-hub.mjs",
+    "local:serve": "node scripts/local-hub.mjs",
     "lint": "eslint"
   },
   "dependencies": {
