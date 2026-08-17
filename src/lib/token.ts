@@ -2,6 +2,18 @@ import { githubApiUrl } from "./github-api";
 
 const TOKEN_KEY = "hub-gestao-github-token";
 
+export type TokenErrorKind = "invalid" | "forbidden" | "transient";
+
+export class TokenValidationError extends Error {
+  readonly kind: TokenErrorKind;
+
+  constructor(message: string, kind: TokenErrorKind) {
+    super(message);
+    this.name = "TokenValidationError";
+    this.kind = kind;
+  }
+}
+
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(TOKEN_KEY);
@@ -18,18 +30,6 @@ export function clearToken(): void {
 /** Remove espaços/quebras comuns ao colar o PAT. */
 export function sanitizeToken(raw: string): string {
   return raw.replace(/\s+/g, "").trim();
-}
-
-function friendlyFetchError(err: unknown): Error {
-  if (err instanceof TypeError) {
-    return new Error(
-      "Não foi possível falar com a API do GitHub (Failed to fetch). " +
-        "Pode ser outage (githubstatus.com), VPN/firewall ou bloqueador. " +
-        "Na rede corporativa, rode localmente: npm run local",
-    );
-  }
-  if (err instanceof Error) return err;
-  return new Error("Falha ao validar o token.");
 }
 
 /** Ping sem token — só para diagnosticar se a API responde neste browser. */
@@ -69,15 +69,16 @@ export async function validateToken(token: string): Promise<{
 }> {
   const cleaned = sanitizeToken(token);
   if (!cleaned) {
-    throw new Error("Cole o token do GitHub.");
+    throw new TokenValidationError("Cole o token do GitHub.", "invalid");
   }
   if (
     !cleaned.startsWith("ghp_") &&
     !cleaned.startsWith("github_pat_") &&
     !cleaned.startsWith("gho_")
   ) {
-    throw new Error(
+    throw new TokenValidationError(
       "Token com formato inesperado. Crie um Personal Access Token (classic) com scope gist.",
+      "invalid",
     );
   }
 
@@ -89,28 +90,37 @@ export async function validateToken(token: string): Promise<{
       },
       cache: "no-store",
     });
-  } catch (err) {
-    throw friendlyFetchError(err);
+  } catch {
+    throw new TokenValidationError(
+      "Não foi possível falar com a API do GitHub (Failed to fetch). " +
+        "Pode ser outage (githubstatus.com), VPN/firewall ou bloqueador. " +
+        "Na rede corporativa, rode localmente: npm run local",
+      "transient",
+    );
   }
 
   if (res.status === 401) {
-    throw new Error(
+    throw new TokenValidationError(
       "Token inválido ou revogado. Crie um novo Personal Access Token (classic) com scope gist.",
+      "invalid",
     );
   }
   if (res.status === 403) {
-    throw new Error(
+    throw new TokenValidationError(
       "Acesso negado (403). Confira SSO da organização ou se o token tem scope gist.",
+      "forbidden",
     );
   }
   if (res.status >= 500) {
-    throw new Error(
+    throw new TokenValidationError(
       `API do GitHub instável (HTTP ${res.status}). Veja https://www.githubstatus.com e tente de novo.`,
+      "transient",
     );
   }
   if (!res.ok) {
-    throw new Error(
+    throw new TokenValidationError(
       `GitHub respondeu ${res.status}. Verifique o PAT e o scope gist.`,
+      "transient",
     );
   }
 

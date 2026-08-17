@@ -10,7 +10,7 @@ export default function HubLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { ready, token } = useAuth();
+  const { ready, token, sessionWarning } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -39,6 +39,20 @@ export default function HubLayout({
     <div className="hub-shell">
       <Sidebar />
       <main className="hub-main">
+        {sessionWarning ? (
+          <p
+            className="empty-hint"
+            style={{
+              margin: "0.75rem 1rem 0",
+              padding: "0.55rem 0.75rem",
+              borderRadius: 10,
+              background: "color-mix(in srgb, var(--highlight) 18%, #fff)",
+              color: "var(--ink)",
+            }}
+          >
+            Sessão mantida, mas a API falhou agora: {sessionWarning}
+          </p>
+        ) : null}
         <div className="hub-stage">{children}</div>
       </main>
     </div>
