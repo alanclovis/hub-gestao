@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
+import { probeGitHubApi } from "@/lib/token";
 
 export default function LoginPage() {
   const { loginWithToken, ready, token } = useAuth();
@@ -10,12 +11,30 @@ export default function LoginPage() {
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [probe, setProbe] = useState<{ ok: boolean; detail: string } | null>(
+    null,
+  );
+  const [probing, setProbing] = useState(false);
 
   useEffect(() => {
     if (ready && token) {
       router.replace("/");
     }
   }, [ready, token, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setProbing(true);
+    void probeGitHubApi().then((result) => {
+      if (!cancelled) {
+        setProbe(result);
+        setProbing(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,6 +48,12 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const runProbe = async () => {
+    setProbing(true);
+    setProbe(await probeGitHubApi());
+    setProbing(false);
   };
 
   return (
@@ -67,9 +92,42 @@ export default function LoginPage() {
             </a>{" "}
             (marque só <code>gist</code> — não use fine-grained)
           </li>
-          <li>Copie o token completo (começa com <code>ghp_</code>)</li>
+          <li>
+            Copie o token completo (começa com <code>ghp_</code>)
+          </li>
           <li>Ele fica só neste navegador (localStorage)</li>
         </ol>
+
+        <p
+          className="empty-hint"
+          style={{
+            marginTop: "1rem",
+            textAlign: "left",
+            color: probe && !probe.ok ? "var(--danger)" : undefined,
+          }}
+        >
+          {probing
+            ? "Testando conexão com api.github.com…"
+            : probe
+              ? probe.ok
+                ? `✓ ${probe.detail}`
+                : `✗ ${probe.detail}`
+              : null}
+          {!probing ? (
+            <>
+              {" "}
+              <button
+                type="button"
+                className="hub-ghost-btn"
+                onClick={() => void runProbe()}
+                style={{ display: "inline", padding: "0.15rem 0.45rem" }}
+              >
+                testar de novo
+              </button>
+            </>
+          ) : null}
+        </p>
+
         <form onSubmit={onSubmit} style={{ marginTop: "1.25rem" }}>
           <div className="field" style={{ textAlign: "left" }}>
             <label>GitHub token</label>

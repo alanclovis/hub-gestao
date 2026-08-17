@@ -39,12 +39,12 @@ async function gh<T>(
   const method = (init?.method ?? "GET").toUpperCase();
   const hasBody = init?.body != null;
   const headers: Record<string, string> = {
-    Accept: "application/vnd.github+json",
     Authorization: `Bearer ${token}`,
     ...(init?.headers as Record<string, string> | undefined),
   };
-  // Só envia Content-Type com body — evita preflight desnecessário no browser.
-  if (hasBody || method !== "GET") {
+  // Content-Type só com body (permitido no CORS do GitHub).
+  // Não enviar Accept / X-GitHub-Api-Version — quebram preflight no browser.
+  if (hasBody || (method !== "GET" && method !== "HEAD")) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -59,7 +59,7 @@ async function gh<T>(
     if (err instanceof TypeError) {
       throw new Error(
         "Não foi possível falar com a API do GitHub (Failed to fetch). " +
-          "Verifique internet, VPN/firewall ou bloqueador que impeça api.github.com.",
+          "Isso costuma ser rede/VPN/firewall/bloqueador — teste outra rede ou desative VPN/adblock.",
       );
     }
     throw err;

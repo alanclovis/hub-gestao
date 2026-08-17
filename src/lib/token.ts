@@ -22,12 +22,36 @@ function friendlyFetchError(err: unknown): Error {
   if (err instanceof TypeError) {
     return new Error(
       "Não foi possível falar com a API do GitHub (Failed to fetch). " +
-        "Verifique internet, VPN/firewall e se algum bloqueador está impedindo api.github.com. " +
-        "Use um Personal Access Token clássico com scope gist (não fine-grained).",
+        "Isso costuma ser rede/VPN/firewall/bloqueador — não o token em si. " +
+        "Teste em outra rede (ex.: hotspot do celular) ou desative VPN/adblock.",
     );
   }
   if (err instanceof Error) return err;
   return new Error("Falha ao validar o token.");
+}
+
+/** Ping sem token — só para diagnosticar se api.github.com responde no browser. */
+export async function probeGitHubApi(): Promise<{ ok: boolean; detail: string }> {
+  try {
+    const res = await fetch("https://api.github.com/", {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      return { ok: false, detail: `API respondeu HTTP ${res.status}` };
+    }
+    return { ok: true, detail: "API alcançável neste navegador" };
+  } catch (err) {
+    return {
+      ok: false,
+      detail:
+        err instanceof TypeError
+          ? "Browser bloqueou api.github.com (CORS/rede/VPN/adblock)"
+          : err instanceof Error
+            ? err.message
+            : "Falha desconhecida",
+    };
+  }
 }
 
 export async function validateToken(token: string): Promise<{
@@ -51,9 +75,9 @@ export async function validateToken(token: string): Promise<{
 
   let res: Response;
   try {
+    // Só Authorization — Accept/X-GitHub-Api-Version quebram CORS no browser.
     res = await fetch("https://api.github.com/user", {
       headers: {
-        Accept: "application/vnd.github+json",
         Authorization: `Bearer ${cleaned}`,
       },
       cache: "no-store",
